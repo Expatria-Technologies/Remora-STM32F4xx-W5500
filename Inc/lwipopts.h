@@ -32,6 +32,8 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#define SYS_LIGHTWEIGHT_PROT 0
+
 /* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
 #define NO_SYS 1
 #define MEM_ALIGNMENT 4
@@ -43,7 +45,18 @@
 #define LWIP_ICMP 1
 #define LWIP_UDP 1
 #define LWIP_TCP 1
-#define MEM_SIZE 2048
+#ifndef MEM_SIZE
+#define MEM_SIZE (16*1024)
+#endif
+#ifndef MEM_NUM_PBUF
+#define MEM_NUM_PBUF 24
+#endif
+#ifndef MEM_NUM_TCP_PCB
+#define MEM_NUM_TCP_PCB 8
+#endif
+#ifndef PBUF_POOL_SIZE
+#define PBUF_POOL_SIZE 24
+#endif
 
 // disable ACD to avoid build errors
 // http://lwip.100.n7.nabble.com/Build-issue-if-LWIP-DHCP-is-set-to-0-td33280.html

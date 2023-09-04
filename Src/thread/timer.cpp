@@ -2,7 +2,7 @@
 
 #include "timer.h"
 
-#include "../configuration.h"
+#include "configuration.h"
 #include "../interrupt/interrupt.h"
 #include "timerInterrupt.h"
 #include "pruThread.h"

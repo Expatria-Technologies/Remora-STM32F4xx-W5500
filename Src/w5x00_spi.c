@@ -108,13 +108,6 @@ void wizchip_spi_initialize(void)
 
     spi_init();
     spi_set_speed(WIZCHIP_SPI_PRESCALER);
-
-    wizchip_reset();
-
-    reg_wizchip_cris_cbfunc(wizchip_critical_section_lock, wizchip_critical_section_unlock);
-    reg_wizchip_cs_cbfunc(wizchip_select, wizchip_deselect);
-    reg_wizchip_spi_cbfunc(spi_get_byte, spi_put_byte);
-    reg_wizchip_spiburst_cbfunc(spi_read, spi_write);
 }
 
 void wizchip_cris_initialize(void)
@@ -125,17 +118,12 @@ void wizchip_cris_initialize(void)
 
 void wizchip_initialize(void)
 {
-    /* Deselect the FLASH : chip select high */
-    wizchip_deselect();
+    wizchip_reset();
 
-    /* CS function register */
+    reg_wizchip_cris_cbfunc(wizchip_critical_section_lock, wizchip_critical_section_unlock);
     reg_wizchip_cs_cbfunc(wizchip_select, wizchip_deselect);
-
-    /* SPI function register */
-    reg_wizchip_spi_cbfunc(wizchip_read, wizchip_write);
-#ifdef USE_SPI_DMA
+    reg_wizchip_spi_cbfunc(spi_get_byte, spi_put_byte);
     reg_wizchip_spiburst_cbfunc(spi_read, spi_write);
-#endif
 
     /* W5x00 initialize */
     uint8_t temp;

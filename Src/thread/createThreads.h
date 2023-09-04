@@ -1,4 +1,4 @@
-#include "../extern.h"
+#include "extern.h"
 
 void createThreads(void)
 {

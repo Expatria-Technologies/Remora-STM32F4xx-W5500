@@ -1,7 +1,7 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
-#include "../configuration.h"
+#include "configuration.h"
 
 #define BASE_PERIOD 1000000 / PRU_BASEFREQ
 #define SERVO_PERIOD 1000000 / PRU_SERVOFREQ
