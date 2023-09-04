@@ -4,8 +4,8 @@
 #include "../modules/module.h"
 
 #include "stm32f4xx_hal.h"
-GPIO_TypeDef*       GPIOx;
-GPIO_InitTypeDef    GPIO_InitStruct = {0};
+GPIO_TypeDef       GPIO0, GPIO1;
+GPIO_InitTypeDef   GPIO_InitStruct = {0};
 
 
 using namespace std;
@@ -26,7 +26,7 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-		HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);  
+		HAL_GPIO_Init(&GPIO0, &GPIO_InitStruct);  
 	}
 
 	if (this->slice == 1){
@@ -38,7 +38,7 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-		HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 
+		HAL_GPIO_Init(&GPIO1, &GPIO_InitStruct); 
 	}	
 
 	this->semaphore = false;

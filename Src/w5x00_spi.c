@@ -40,11 +40,7 @@ static struct {
     st_gpio_t cs;
     st_gpio_t rst;
 } hw;
-static uint32_t prescaler = 0;
-
-#define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
-#define DIGITAL_IN(port, pin) BITBAND_PERI(port->IDR, pin)
-#define DIGITAL_OUT(port, pin, on) { BITBAND_PERI((port)->ODR, pin) = on; }
+static uint32_t prescaler = WIZCHIP_SPI_PRESCALER;
 
 static void (*irq_callback)(void);
 static volatile bool spin_lock = false;
@@ -59,12 +55,12 @@ static inline void wizchip_select(void)
     if(prescaler != WIZCHIP_SPI_PRESCALER)
         prescaler = spi_set_speed(WIZCHIP_SPI_PRESCALER);
 
-    DIGITAL_OUT(hw.cs.port, hw.cs.pin, 0);
+    HAL_GPIO_WritePin(hw.cs.port, hw.cs.pin, 0);
 }
 
 static inline void wizchip_deselect(void)
 {
-    DIGITAL_OUT(hw.cs.port, hw.cs.pin, 1);
+    HAL_GPIO_WritePin(hw.cs.port, hw.cs.pin, 1);
 
     if(prescaler != WIZCHIP_SPI_PRESCALER)
         spi_set_speed(prescaler);
@@ -73,9 +69,9 @@ static inline void wizchip_deselect(void)
 void wizchip_reset()
 {
     if(hw.rst.port) {
-        DIGITAL_OUT(hw.rst.port, hw.rst.pin, 0);
+        HAL_GPIO_WritePin(hw.rst.port, hw.rst.pin, 0);
         HAL_Delay(2);
-        DIGITAL_OUT(hw.rst.port, hw.rst.pin, 1);
+        HAL_GPIO_WritePin(hw.rst.port, hw.rst.pin, 1);
         HAL_Delay(10);
     }
 }
@@ -95,14 +91,35 @@ static void wizchip_critical_section_unlock(void)
 
 void wizchip_spi_initialize(void)
 {    
+
+    GPIO_InitTypeDef    GPIO_InitStruct = {0};
+
     hw.cs.port = SPI_CS_PORT;
     hw.cs.pin = SPI_CS_PIN;
 
     hw.rst.port = SPI_RST_PORT;
     hw.rst.pin = SPI_RST_PIN;
 
-    // if(hw.cs.port == NULL)
-    //    return error.
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    // Configure GPIO pin Output Level
+    HAL_GPIO_WritePin(SPI_CS_PORT,SPI_CS_PIN, GPIO_PIN_SET);
+
+    // Configure the GPIO pin
+    GPIO_InitStruct.Pin = hw.cs.pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(hw.cs.port, &GPIO_InitStruct);  
+
+    // Configure GPIO pin Output Level
+    HAL_GPIO_WritePin(SPI_RST_PORT,SPI_RST_PIN, GPIO_PIN_SET);
+
+    // Configure the GPIO pin
+    GPIO_InitStruct.Pin = hw.rst.pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(hw.rst.port, &GPIO_InitStruct);  
 
     wizchip_deselect();
 

@@ -639,22 +639,26 @@ static txData_t* getAltTxBuffer(TxPingPongBuffer* buffer) {
 int main()
 {
     main_init();
-    
+
+    HAL_Delay(1000 * 3); // wait for 3 seconds
+
+    printf("Remora for STM32F4xx starting...\n\n\r");
+
+    HAL_Delay(100);
+
+    //while(1);
+
+    EthernetInit();
+    udpServerInit();
+    IAP_tftpd_init();
+
     // Network configuration
     IP4_ADDR(&g_ip, 10, 10, 10, 10);
     IP4_ADDR(&g_mask, 255, 255, 255, 0);
     IP4_ADDR(&g_gateway, 10, 10, 10, 1);
 
-    HAL_Delay(1000 * 3); // wait for 3 seconds
-
-    printf("\nRemora for STM32F4xx starting (core0)...\n\n\r");
-
     currentState = ST_SETUP;
     prevState = ST_RESET;
-
-    EthernetInit();
-    udpServerInit();
-    IAP_tftpd_init();
 
     initRxPingPongBuffer(&rxPingPongBuffer);
     initTxPingPongBuffer(&txPingPongBuffer);
