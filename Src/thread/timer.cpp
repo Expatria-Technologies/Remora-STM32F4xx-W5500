@@ -37,7 +37,7 @@ void pruTimer::startTimer(void)
 {
     uint32_t period;
     
-    printf("    setting up timer Slice %d\n", this->slice);
+    printf("    setting up timer Slice %d\r\n", this->slice);
    
     if (this->slice == 0)
         period = BASE_PERIOD;
@@ -45,7 +45,7 @@ void pruTimer::startTimer(void)
         period = SERVO_PERIOD;
     else
         period = 0;
-    printf("    actual period = %d\n", period);
+    printf("    actual period = %d\r\n", period);
 
  // Single-shot 1 us per tick
     //base thread
@@ -76,10 +76,10 @@ void pruTimer::startTimer(void)
         HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 1, 1);
         NVIC_EnableIRQ(PULSE_TIMER_IRQn);   
     } else{
-        printf("	Invalid Slice\n");
+        printf("	Invalid Slice\r\n");
     }
 
-    printf("	timer started\n");
+    printf("	timer started\r\n");
 }
 
 void pruTimer::stopTimer()

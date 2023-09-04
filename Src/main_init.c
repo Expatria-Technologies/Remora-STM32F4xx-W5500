@@ -27,6 +27,7 @@
 
 static void SystemClock_Config (void);
 static void MX_GPIO_Init (void);
+static void MX_DMA_Init (void);
 
 
 int main_init(void)
@@ -49,6 +50,7 @@ int main_init(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
+    MX_DMA_Init();
 
     uint32_t latency;
     RCC_ClkInitTypeDef clock_cfg;
@@ -424,6 +426,15 @@ static void MX_GPIO_Init(void)
 #ifdef GPIOH
   __HAL_RCC_GPIOH_CLK_ENABLE();
 #endif
+}
+
+static void MX_DMA_Init (void)
+{
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+
 }
 
 /**
