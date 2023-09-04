@@ -23,6 +23,7 @@
 */
 
 #include "remora.h"
+#include "usb_serial.h"
 
 static void SystemClock_Config (void);
 static void MX_GPIO_Init (void);
@@ -48,6 +49,21 @@ int main_init(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
+
+    uint32_t latency;
+    RCC_ClkInitTypeDef clock_cfg;
+
+    HAL_RCC_GetClockConfig(&clock_cfg, &latency);
+
+    __HAL_RCC_TIM1_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    __HAL_RCC_TIM3_CLK_ENABLE();
+    __HAL_RCC_TIM4_CLK_ENABLE();
+    __HAL_RCC_TIM5_CLK_ENABLE();
+    __HAL_RCC_TIM9_CLK_ENABLE();
+    
+        
+    usbInit();
 
     //return to Remora
 }
