@@ -2,6 +2,8 @@
 #define REMORA_H
 #pragma pack(push, 1)
 
+#include "main_init.h"
+
 #include "configuration.h"
 
 typedef union

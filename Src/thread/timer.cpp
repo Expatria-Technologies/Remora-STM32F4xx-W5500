@@ -1,13 +1,10 @@
-#include "hardware/irq.h"
-//#include "hardware/pwm.h"
-#include "hardware/timer.h"
-
 #include <stdio.h>
+
+#include "timer.h"
 
 #include "../configuration.h"
 #include "../interrupt/interrupt.h"
 #include "timerInterrupt.h"
-#include "timer.h"
 #include "pruThread.h"
 
 extern "C" void PWM_Wrap_Handler();
@@ -50,18 +47,34 @@ void pruTimer::startTimer(void)
         period = 0;
     printf("    actual period = %d\n", period);
 
+ // Single-shot 1 us per tick
+    //base thread
     if (this->slice == 0){
-        hw_set_bits(&timer_hw->inte, 1u << slice);//use alarm 0
-        irq_set_exclusive_handler(TIMER_IRQ_0, PWM_Wrap_Handler0);
-        irq_set_enabled(TIMER_IRQ_0, true);
-        timer_hw->alarm[slice] = timer_hw->timerawl + BASE_PERIOD;
-    }
+        STEPPER_TIMER_CLOCK_ENA();
+        STEPPER_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
+        STEPPER_TIMER->PSC = 45;
+        STEPPER_TIMER->ARR = BASE_PERIOD;
+        STEPPER_TIMER->SR &= ~TIM_SR_UIF;
+        STEPPER_TIMER->CNT = 0;
+        STEPPER_TIMER->DIER |= TIM_DIER_UIE;
 
-    else if (this->slice == 1){
-        hw_set_bits(&timer_hw->inte, 1u << slice);//use alarm 1
-        irq_set_exclusive_handler(TIMER_IRQ_1, PWM_Wrap_Handler1);
-        irq_set_enabled(TIMER_IRQ_1, true);
-        timer_hw->alarm[slice] = timer_hw->timerawl + SERVO_PERIOD;
+        HAL_NVIC_SetPriority(STEPPER_TIMER_IRQn, 0, 0);
+        NVIC_EnableIRQ(STEPPER_TIMER_IRQn);
+    } 
+
+ // Single-shot 1 us per tick
+    //servo thread
+        else if (this->slice == 1){
+        PULSE_TIMER_CLOCK_ENA();
+        PULSE_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
+        PULSE_TIMER->PSC = 45;
+        PULSE_TIMER->ARR = SERVO_PERIOD;
+        PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
+        PULSE_TIMER->CNT = 0;
+        PULSE_TIMER->DIER |= TIM_DIER_UIE;
+
+        HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 1, 1);
+        NVIC_EnableIRQ(PULSE_TIMER_IRQn);   
     } else{
         printf("	Invalid Slice\n");
     }
@@ -72,5 +85,4 @@ void pruTimer::startTimer(void)
 void pruTimer::stopTimer()
 {
     printf("	timer stop\n\r");
-    irq_set_enabled(PWM_IRQ_WRAP, false);
 }

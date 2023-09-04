@@ -13,13 +13,14 @@
  * ----------------------------------------------------------------------------------------------------
  */
 /* SPI */
-#define SPI_PORT spi0
+#define SPI_PORT                1 // GPIOB, SCK_PIN = 3, MISO_PIN = 4, MOSI_PIN = 5  probably needs fixing
 
-#define PIN_SCK 18
-#define PIN_MOSI 19
-#define PIN_MISO 16
-#define PIN_CS 17
-#define PIN_RST 20
+#define SPI_CS_PORT             GPIOA //CS_JOG_SW
+#define SPI_CS_PIN              15
+#define SPI_IRQ_PORT            GPIOC //PRU_RESET
+#define SPI_IRQ_PIN             3
+#define SPI_RST_PORT            GPIOA // TXD_INT
+#define SPI_RST_PIN             9
 
 /* Use SPI DMA */
 #define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
@@ -70,7 +71,6 @@ static uint8_t wizchip_read(void);
  */
 static void wizchip_write(uint8_t tx_data);
 
-#ifdef USE_SPI_DMA
 /*! \brief Configure all DMA parameters and optionally start transfer
  *  \ingroup w5x00_spi
  *
@@ -90,7 +90,6 @@ static void wizchip_read_burst(uint8_t *pBuf, uint16_t len);
  *  \param len element count (each element is of size transfer_data_size)
  */
 static void wizchip_write_burst(uint8_t *pBuf, uint16_t len);
-#endif
 
 /*! \brief Enter a critical section
  *  \ingroup w5x00_spi

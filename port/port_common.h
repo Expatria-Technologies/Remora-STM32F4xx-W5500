@@ -13,11 +13,13 @@
  * ----------------------------------------------------------------------------------------------------
  */
 /* Common */
-#include "pico/stdlib.h"
+/*#include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "pico/critical_section.h"
 #include "hardware/spi.h"
 #include "hardware/dma.h"
-#include "hardware/clocks.h"
+#include "hardware/clocks.h"*/
+
+#include "stm32f4xx_hal.h"
 
 #endif /* _PORT_COMMON_H_ */

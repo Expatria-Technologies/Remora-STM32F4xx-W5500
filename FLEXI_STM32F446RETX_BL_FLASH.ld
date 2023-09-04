@@ -38,8 +38,8 @@ MEMORY
 {
   RAM          (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
   BOOT_FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
-  FLASH         (rx)    : ORIGIN = 0x8010000,   LENGTH = 384K - 64K
-  NOINIT        (rx)    : ORIGIN = 0x8060000,   LENGTH = 128K
+  FLASH         (rx)    : ORIGIN = 0x8010000,   LENGTH = 256K - 64K
+  NOINIT        (rx)    : ORIGIN = 0x8050000,   LENGTH = 256K
 }
 
 _FLASH_VectorTable = ORIGIN(FLASH);

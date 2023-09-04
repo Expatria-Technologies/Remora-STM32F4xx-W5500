@@ -19,7 +19,7 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "main.h"
+#include "main_init.h"
 
 #if SPI_ENABLE
 

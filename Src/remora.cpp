@@ -1,6 +1,4 @@
 /*
-Remora, RP2040 with Wiznet Ethernet, firmware for LinuxCNC
-Copyright (C) 2023  Scott Alford (scotta)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License version 3
@@ -19,11 +17,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <cstring>
 
+#include "main_init.h"
+
 #include "configuration.h"
 #include "remora.h"
 #include "boardconfig.h"
 
 #include "crc32.h"
+
+// Flash storage
+#include "flash_if.h"
 
 // WIZnet
 extern "C"
@@ -122,8 +125,6 @@ DynamicJsonDocument doc(JSON_BUFF_SIZE);
 JsonObject thread;
 JsonObject module;
 
-
-static void set_clock_khz(void);
 void EthernetInit();
 void udpServerInit();
 void EthernetTasks();
@@ -144,17 +145,23 @@ uint8_t *pack = static_cast<uint8_t *>(malloc(ETHERNET_MTU));
 uint16_t pack_len = 0;
 struct pbuf *p = NULL;
 
+//Remora Variables
+enum State currentState;
+enum State prevState;
+
+rxData_t* pruRxData;
+
 int8_t checkJson()
 {
-	metadata_t* meta = (metadata_t*)JSON_STORAGE_ADDRESS;
-	uint32_t* json = (uint32_t*)(JSON_STORAGE_ADDRESS + METADATA_LEN);
+	metadata_t* meta = (metadata_t*)JSON_UPLOAD_ADDRESS;
+	uint32_t* json = (uint32_t*)(JSON_UPLOAD_ADDRESS + METADATA_LEN);
 
     uint32_t table[256];
     crc32::generate_table(table);
     int mod, padding;
 
 	// Check length is reasonable
-	if (meta->length > (32/4) * (1u << 12))
+	if (meta->length > (USER_FLASH_END_ADDRESS - JSON_UPLOAD_ADDRESS))
 	{
 		newJson = false;
 		printf("JSON Config length incorrect\n");
@@ -202,35 +209,26 @@ int8_t checkJson()
 
 void moveJson()
 {
-	uint8_t pages;
-    uint32_t i = 0;
-	metadata_t* meta = (metadata_t*)(JSON_UPLOAD_ADDRESS);;
+	uint32_t i = 0;
+	metadata_t* meta = (metadata_t*)JSON_UPLOAD_ADDRESS;
 
 	uint16_t jsonLength = meta->jsonLength;
 
-    HAL_StatusTypeDef status;
+	// erase the old JSON config file
+	FLASH_If_Erase(JSON_STORAGE_ADDRESS);
 
-    // how many pages are needed to be written. The first 4 bytes of the storage location will contain the length of the JSON file
-    pages = (meta->jsonLength + 4) / FLASH_PAGE_SIZE;
-    if ((meta->jsonLength + 4) / FLASH_PAGE_SIZE > 0)
+	HAL_StatusTypeDef status;
+
+	// store the length of the file in the 0th byte
+	status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, JSON_STORAGE_ADDRESS, jsonLength);
+
+    for (i = 0; i < jsonLength; i++)
     {
-        pages++;
+        if (status == HAL_OK)
+        {
+            status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, (JSON_STORAGE_ADDRESS + 4 + i), *((uint8_t*)(JSON_UPLOAD_ADDRESS + METADATA_LEN + i)));
+        }
     }
-
-    printf("pages = %d\n", pages);
-    uint8_t data[2] = {0};
-
-	// store the length of the file in the 0th word
-    data[0] = (uint8_t)((jsonLength & 0x00FF));
-    data[1] = (uint8_t)((jsonLength & 0xFF00) >> 8);
-    
-    uint32_t address = (uint32_t)JSON_UPLOAD_ADDRESS;
-    HAL_FLASH_Unlock();
-    while(status == HAL_OK) {
-        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, data[0]);
-        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address + 1, data[1]);
-    }
-    HAL_FLASH_Lock();
 
 }
 
@@ -471,149 +469,136 @@ void debugThreadLow()
     servoThread->registerModule(debugOffS);
 }
 
-void core1_entry()
+void runThreads(void)
 {
-    enum State currentState;
-    enum State prevState;
+    switch(currentState){
+        case ST_SETUP:
+            // do setup tasks
+            if (currentState != prevState)
+            {
+                printf("\n## Entering SETUP state\n\n");
+            }
+            prevState = currentState;
 
-    rxData_t* pruRxData;
+            jsonFromFlash(strJson);
+            deserialiseJSON();
+            configThreads();
+            createThreads();
+            //debugThreadHigh();
+            if (staticConfig)
+            {
+                loadStaticConfig();
+            }
+            else
+            {
+                loadModules();
+            }
+            //debugThreadLow();
 
-    currentState = ST_SETUP;
-    prevState = ST_RESET;
+            currentState = ST_START;
+            break;
 
-    printf("\nRemora for RP2040 starting (core1)...\n\r");
+        case ST_START:
+            // do start tasks
+            if (currentState != prevState)
+            {
+                printf("\n## Entering START state\n");
+            }
+            prevState = currentState;
 
-    while (1)
-    {
-	    switch(currentState){
-	        case ST_SETUP:
-                // do setup tasks
-                if (currentState != prevState)
+            if (!threadsRunning)
+            {
+                // Start the threads
+                printf("\nStarting the BASE thread\n");
+                baseThread->startThread();
+
+                printf("\nStarting the SERVO thread\n");
+                servoThread->startThread();
+
+                threadsRunning = true;
+            }
+
+            currentState = ST_IDLE;
+
+            break;
+
+        case ST_IDLE:
+            // do something when idle
+            if (currentState != prevState)
+            {
+                printf("\n## Entering IDLE state\n");
+            }
+            prevState = currentState;
+            //servo thread is run outside of interrupt context.
+            servoThread->run();                
+
+            //wait for data before changing to running state
+            
+            if (comms->getStatus())
+            {
+                currentState = ST_RUNNING;
+            }
+            
+            break;
+
+        case ST_RUNNING:
+            // do running tasks
+            if (currentState != prevState)
+            {
+                printf("\n## Entering RUNNING state\n");
+            }
+
+            prevState = currentState;
+            //servo thread is run outside of interrupt context.
+            servoThread->run();
+            
+            if (comms->getStatus() == false)
+            {
+                currentState = ST_RESET;
+            }
+            
+            break;
+
+        case ST_STOP:
+            // do stop tasks
+            if (currentState != prevState)
+            {
+                printf("\n## Entering STOP state\n");
+            }
+            prevState = currentState;
+            //servo thread is run outside of interrupt context.
+            servoThread->run();              
+
+            currentState = ST_STOP;
+            break;
+
+        case ST_RESET:
+            // do reset tasks
+            if (currentState != prevState)
+            {
+                printf("\n## Entering RESET state\n");
+            }
+            prevState = currentState;
+
+            // set all of the rxData buffer to 0
+            // rxData.rxBuffer is volatile so need to do this the long way. memset cannot be used for volatile
+            pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
+
+            printf("   Resetting rxBuffer\n");
+            {
+                int n = sizeof(pruRxData->rxBuffer);
+                while(n-- > 0)
                 {
-                    printf("\n## Entering SETUP state\n\n");
+                    pruRxData->rxBuffer[n] = 0;
                 }
-                prevState = currentState;
+            }
 
-                jsonFromFlash(strJson);
-                deserialiseJSON();
-                configThreads();
-                createThreads();
-                //debugThreadHigh();
-                if (staticConfig)
-                {
-                    loadStaticConfig();
-                }
-                else
-                {
-                    loadModules();
-                }
-                //debugThreadLow();
+            currentState = ST_IDLE;
+            break;
 
-                currentState = ST_START;
-                break;
-
-            case ST_START:
-                // do start tasks
-                if (currentState != prevState)
-                {
-                    printf("\n## Entering START state\n");
-                }
-                prevState = currentState;
-
-                if (!threadsRunning)
-                {
-                    // Start the threads
-                    printf("\nStarting the BASE thread\n");
-                    baseThread->startThread();
-
-                    printf("\nStarting the SERVO thread\n");
-                    servoThread->startThread();
-
-                    threadsRunning = true;
-                }
-
-                currentState = ST_IDLE;
-
-                break;
-
-            case ST_IDLE:
-                // do something when idle
-                if (currentState != prevState)
-                {
-                    printf("\n## Entering IDLE state\n");
-                }
-                prevState = currentState;
-                //servo thread is run outside of interrupt context.
-                servoThread->run();                
-
-                //wait for data before changing to running state
-                
-                if (comms->getStatus())
-                {
-                    currentState = ST_RUNNING;
-                }
-                
-                break;
-
-            case ST_RUNNING:
-                // do running tasks
-                if (currentState != prevState)
-                {
-                    printf("\n## Entering RUNNING state\n");
-                }
-
-                prevState = currentState;
-                //servo thread is run outside of interrupt context.
-                servoThread->run();
-                
-                if (comms->getStatus() == false)
-                {
-                    currentState = ST_RESET;
-                }
-                
-                break;
-
-            case ST_STOP:
-                // do stop tasks
-                if (currentState != prevState)
-                {
-                    printf("\n## Entering STOP state\n");
-                }
-                prevState = currentState;
-                //servo thread is run outside of interrupt context.
-                servoThread->run();              
-
-                currentState = ST_STOP;
-                break;
-
-            case ST_RESET:
-                // do reset tasks
-                if (currentState != prevState)
-                {
-                    printf("\n## Entering RESET state\n");
-                }
-                prevState = currentState;
-
-                // set all of the rxData buffer to 0
-                // rxData.rxBuffer is volatile so need to do this the long way. memset cannot be used for volatile
-                pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
-
-                printf("   Resetting rxBuffer\n");
-                {
-                    int n = sizeof(pruRxData->rxBuffer);
-                    while(n-- > 0)
-                    {
-                        pruRxData->rxBuffer[n] = 0;
-                    }
-                }
-
-                currentState = ST_IDLE;
-                break;
-
-            case ST_WDRESET:
-                // force a reset
-                break;
-	    }
+        case ST_WDRESET:
+            // force a reset
+            break;
     }
 
 }
@@ -651,24 +636,21 @@ static txData_t* getAltTxBuffer(TxPingPongBuffer* buffer) {
 }
 
 
-int remora_main()
+int main()
 {
+    main_init();
+    
     // Network configuration
     IP4_ADDR(&g_ip, 10, 10, 10, 10);
     IP4_ADDR(&g_mask, 255, 255, 255, 0);
     IP4_ADDR(&g_gateway, 10, 10, 10, 1);
 
-    set_clock_khz();
+    HAL_Delay(1000 * 3); // wait for 3 seconds
 
-    /* Grant high bus priority to the second core. */
-    bus_ctrl_hw->priority = BUSCTRL_BUS_PRIORITY_PROC1_BITS;
+    printf("\nRemora for STM32F4xx starting (core0)...\n\n\r");
 
-    // Initialize stdio after the clock change
-    stdio_init_all();
-
-    sleep_ms(1000 * 3); // wait for 3 seconds
-
-    printf("\nRemora for RP2040 starting (core0)...\n\n\r");
+    currentState = ST_SETUP;
+    prevState = ST_RESET;
 
     EthernetInit();
     udpServerInit();
@@ -677,11 +659,9 @@ int remora_main()
     initRxPingPongBuffer(&rxPingPongBuffer);
     initTxPingPongBuffer(&txPingPongBuffer);
 
-    // launch main Remora code on the second core
-    multicore_launch_core1(core1_entry);
-
     while (1)
     {
+        runThreads();
         EthernetTasks();
         sys_check_timeouts();
 
@@ -695,31 +675,14 @@ int remora_main()
 
             // force a reset to load new JSON configuration
             printf("Forceing a reboot now....\n");
-            watchdog_reboot(0, SRAM_END, 0);
+            NVIC_SystemReset();
             for (;;) {
-                __wfi();
+                __NOP();
             }
             }
         }
     }
 }
-
-
-static void set_clock_khz(void)
-{
-    // set a system clock frequency in khz
-    set_sys_clock_khz(PLL_SYS_KHZ, true);
-
-    // configure the specified clock
-    clock_configure(
-        clk_peri,
-        0,                                                // No glitchless mux
-        CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, // System PLL on AUX mux
-        PLL_SYS_KHZ * 1000,                               // Input frequency
-        PLL_SYS_KHZ * 1000                                // Output (must be same as no divider)
-    );
-}
-
 
 void EthernetInit()
 {
@@ -837,7 +800,7 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
             while (baseThread->semaphore);
-                baseThread->semaphore = true;
+            baseThread->semaphore = true;
             //don't need to wait for the servo thread.
 
             swapTxBuffers(&txPingPongBuffer);
@@ -853,7 +816,7 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
             while (baseThread->semaphore);
-                baseThread->semaphore = true;
+            baseThread->semaphore = true;
             //don't need to wait for the servo thread.
             //feedback data will now go into the alternate buffer
             swapTxBuffers(&txPingPongBuffer);

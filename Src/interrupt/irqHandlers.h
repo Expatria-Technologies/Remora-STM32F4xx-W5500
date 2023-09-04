@@ -1,34 +1,26 @@
 #include "interrupt.h"
-//#include "../hardware/timer.h"
+#include "../thread/timer.h"
 
 extern "C" {
-
-	void PWM_Wrap_Handler()
+	// Main stepper driver
+	void STEPPER_TIMER_IRQHandler (void)
 	{
-		int irq = pwm_get_irq_status_mask();
+		STEPPER_TIMER->SR &= ~TIM_SR_UIF;                 // Clear UIF flag
+		STEPPER_TIMER->SR &= ~TIM_SR_UIF;                 // Clear UIF flag
+		STEPPER_TIMER->ARR = BASE_PERIOD;				  //schedule next IRQ
+		STEPPER_TIMER->EGR = TIM_EGR_UG;
+		STEPPER_TIMER->CR1 |= TIM_CR1_CEN;	
 
-		if (irq & (1 << 0))
-		{
-			Interrupt::SLICE0_Wrapper();
-			pwm_clear_irq(0);
-		}
-		else if (irq & (1 << 1))
-		{
-			Interrupt::SLICE1_Wrapper();
-			pwm_clear_irq(1);
-		}
+		Interrupt::SLICE0_Wrapper();		
 	}
 
-	void PWM_Wrap_Handler0()
+	void PULSE_TIMER_IRQHandler (void)
 	{
-		hw_clear_bits(&timer_hw->intr, 1u << 0);
-		timer_hw->alarm[0] = timer_hw->timerawl + BASE_PERIOD;
-		Interrupt::SLICE0_Wrapper();		
-	}	
-	void PWM_Wrap_Handler1()
-	{
-		hw_clear_bits(&timer_hw->intr, 1u << 1);
-		timer_hw->alarm[1] = timer_hw->timerawl + SERVO_PERIOD;
-		Interrupt::SLICE1_Wrapper();
-	}		
+		PULSE_TIMER->SR &= ~TIM_SR_UIF;                 // Clear UIF flag
+		PULSE_TIMER->ARR = SERVO_PERIOD;				//schedule next IRQ
+		PULSE_TIMER->EGR = TIM_EGR_UG;
+		PULSE_TIMER->CR1 |= TIM_CR1_CEN;	
+
+		Interrupt::SLICE1_Wrapper();		
+	}
 }

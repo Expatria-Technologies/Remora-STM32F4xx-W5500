@@ -181,7 +181,7 @@ static void IAP_wrq_recv_callback(void *_args, struct udp_pcb *upcb, struct pbuf
     HAL_StatusTypeDef status;
     uint16_t *data = (uint16_t *)data_buffer;
     uint32_t address = Flash_Write_Address, remaining = 512;
-    HAL_FLASH_Unlock();
+    status = HAL_FLASH_Unlock();
     while(remaining && status == HAL_OK) {
         status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, *data++);
         status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address + 2, *data++);

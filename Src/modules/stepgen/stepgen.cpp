@@ -1,6 +1,6 @@
 
 #include "stepgen.h"
-#include "../remora.h"
+#include "remora.h"
 //#include "../boardconfig.h"
 
 
