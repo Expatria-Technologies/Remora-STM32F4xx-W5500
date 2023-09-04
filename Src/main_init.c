@@ -61,8 +61,7 @@ int main_init(void)
     __HAL_RCC_TIM4_CLK_ENABLE();
     __HAL_RCC_TIM5_CLK_ENABLE();
     __HAL_RCC_TIM9_CLK_ENABLE();
-    
-        
+
     usbInit();
 
     //return to Remora

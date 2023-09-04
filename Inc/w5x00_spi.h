@@ -16,11 +16,11 @@
 #define SPI_PORT                1 // GPIOB, SCK_PIN = 3, MISO_PIN = 4, MOSI_PIN = 5  probably needs fixing
 
 #define SPI_CS_PORT             GPIOA //CS_JOG_SW
-#define SPI_CS_PIN              15
+#define SPI_CS_PIN              GPIO_PIN_15
 #define SPI_IRQ_PORT            GPIOC //PRU_RESET
-#define SPI_IRQ_PIN             3
+#define SPI_IRQ_PIN             GPIO_PIN_3
 #define SPI_RST_PORT            GPIOA // TXD_INT
-#define SPI_RST_PIN             9
+#define SPI_RST_PIN             GPIO_PIN_9
 
 /* Use SPI DMA */
 #define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
