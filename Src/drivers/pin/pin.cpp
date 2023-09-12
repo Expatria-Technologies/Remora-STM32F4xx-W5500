@@ -70,8 +70,8 @@ void Pin::configPin()
     if (this->portAndPin[0] == 'P') // PXXX e.g.PA_2 PC_15
     {  
         this->portIndex     = this->portAndPin[1] - 'A';
-        this->pinNumber     = this->portAndPin[3] - '0';       
-        uint16_t pin2       = this->portAndPin[4] - '0';       
+        this->pinNumber     = this->portAndPin[2] - '0';       
+        uint16_t pin2       = this->portAndPin[3] - '0';       
 
         if (pin2 <= 8) 
         {

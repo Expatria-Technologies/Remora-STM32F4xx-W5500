@@ -26,7 +26,7 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-		HAL_GPIO_Init(&GPIO0, &GPIO_InitStruct);  
+		HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);  
 	}
 
 	if (this->slice == 1){
@@ -38,7 +38,7 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-		HAL_GPIO_Init(&GPIO1, &GPIO_InitStruct); 
+		HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 
 	}	
 
 	this->semaphore = false;
@@ -76,7 +76,7 @@ void pruThread::run(void)
 		return;	
 	
 	while (this->semaphore == true);	
-		this->semaphore = true;	
+	this->semaphore = true;	
 	
 	if (this->slice == 0){
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);

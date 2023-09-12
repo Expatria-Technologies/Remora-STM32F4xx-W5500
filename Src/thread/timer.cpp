@@ -31,8 +31,6 @@ void pruTimer::timerTick(void)
 	    this->timerOwnerPtr->run();
 }
 
-
-
 void pruTimer::startTimer(void)
 {
     uint32_t period;
@@ -60,6 +58,9 @@ void pruTimer::startTimer(void)
 
         HAL_NVIC_SetPriority(STEPPER_TIMER_IRQn, 0, 0);
         NVIC_EnableIRQ(STEPPER_TIMER_IRQn);
+
+        STEPPER_TIMER->EGR = TIM_EGR_UG;
+        STEPPER_TIMER->CR1 |= TIM_CR1_CEN;        
     } 
 
  // Single-shot 1 us per tick
@@ -73,8 +74,11 @@ void pruTimer::startTimer(void)
         PULSE_TIMER->CNT = 0;
         PULSE_TIMER->DIER |= TIM_DIER_UIE;
 
-        HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 1, 1);
-        NVIC_EnableIRQ(PULSE_TIMER_IRQn);   
+        HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 0, 1);
+        NVIC_EnableIRQ(PULSE_TIMER_IRQn);
+
+        PULSE_TIMER->EGR = TIM_EGR_UG;
+        PULSE_TIMER->CR1 |= TIM_CR1_CEN;        
     } else{
         printf("	Invalid Slice\r\n");
     }

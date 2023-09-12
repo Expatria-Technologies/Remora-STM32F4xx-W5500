@@ -181,7 +181,7 @@ int8_t checkJson()
     printf("mod = %d, padding = %d\n", mod, padding);
 
 	// Compute CRC
-    char* ptr = (char *)(JSON_STORAGE_ADDRESS + METADATA_LEN);
+    char* ptr = (char *)(JSON_UPLOAD_ADDRESS + METADATA_LEN);
     for (int i = 0; i < meta->jsonLength + padding; i++)
     {
         crc32 = crc32::update(table, crc32, ptr, 1);
@@ -214,14 +214,26 @@ void moveJson()
 
 	uint16_t jsonLength = meta->jsonLength;
 
+    printf("JSON Length %d\n", jsonLength);
+
+    HAL_FLASH_Unlock();
+
 	// erase the old JSON config file
+    printf("Erase old file\n");
 	FLASH_If_Erase(JSON_STORAGE_ADDRESS);
 
 	HAL_StatusTypeDef status;
 
 	// store the length of the file in the 0th byte
+    printf("Write file length\n");
 	status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, JSON_STORAGE_ADDRESS, jsonLength);
 
+    jsonLength = *(uint32_t*)(JSON_STORAGE_ADDRESS);
+    printf("Written JSON Length %d\n", jsonLength);
+
+    jsonLength = meta->jsonLength;
+
+    printf("Copy Data\n");
     for (i = 0; i < jsonLength; i++)
     {
         if (status == HAL_OK)
@@ -229,6 +241,8 @@ void moveJson()
             status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, (JSON_STORAGE_ADDRESS + 4 + i), *((uint8_t*)(JSON_UPLOAD_ADDRESS + METADATA_LEN + i)));
         }
     }
+     HAL_FLASH_Lock();
+    printf("Data Copied\n");
 
 }
 
@@ -242,7 +256,7 @@ void jsonFromFlash(std::string json)
     printf("\n1. Loading JSON configuration file from Flash memory\n");
 
     // read byte 0 to determine length to read
-    jsonLength = *(uint32_t*)(JSON_UPLOAD_ADDRESS);
+    jsonLength = *(uint32_t*)(JSON_STORAGE_ADDRESS);
 
     if (jsonLength == 0xFFFFFFFF)
     {
