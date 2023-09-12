@@ -47,7 +47,7 @@
 #define LWIP_TCP 1
 #define MEM_SIZE 2048
 
-/*#ifndef MEM_SIZE
+#ifndef MEM_SIZE
 #define MEM_SIZE (16*1024)
 #endif
 #ifndef MEM_NUM_PBUF
@@ -59,7 +59,7 @@
 #ifndef PBUF_POOL_SIZE
 #define PBUF_POOL_SIZE 24
 #endif
-*/
+
 
 // disable ACD to avoid build errors
 // http://lwip.100.n7.nabble.com/Build-issue-if-LWIP-DHCP-is-set-to-0-td33280.html
@@ -79,16 +79,5 @@
 #define LWIP_HTTPD_SSI_INCLUDE_TAG 0
 
 #define LWIP_RAND_WIZ() ((u32_t)rand())
-
-#if 0
-#define LWIP_DEBUG 1
-#define TCP_DEBUG LWIP_DBG_OFF
-#define ETHARP_DEBUG LWIP_DBG_OFF
-#define PBUF_DEBUG LWIP_DBG_OFF
-#define IP_DEBUG LWIP_DBG_OFF
-#define TCPIP_DEBUG LWIP_DBG_OFF
-#define DHCP_DEBUG LWIP_DBG_OFF
-#define UDP_DEBUG LWIP_DBG_OFF
-#endif
 
 #endif /* __LWIPOPTS_H__ */

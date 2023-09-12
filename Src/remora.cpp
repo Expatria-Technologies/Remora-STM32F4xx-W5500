@@ -648,14 +648,14 @@ int main()
 
     //while(1);
 
-    EthernetInit();
-    udpServerInit();
-    IAP_tftpd_init();
-
     // Network configuration
     IP4_ADDR(&g_ip, 10, 10, 10, 10);
     IP4_ADDR(&g_mask, 255, 255, 255, 0);
-    IP4_ADDR(&g_gateway, 10, 10, 10, 1);
+    IP4_ADDR(&g_gateway, 10, 10, 10, 1);    
+
+    EthernetInit();
+    udpServerInit();
+    IAP_tftpd_init();
 
     currentState = ST_SETUP;
     prevState = ST_RESET;
@@ -723,6 +723,7 @@ void EthernetInit()
     // Set the default interface and bring it up
     netif_set_link_up(&g_netif);
     netif_set_up(&g_netif);
+
 }
 
 

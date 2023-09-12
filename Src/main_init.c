@@ -67,6 +67,7 @@ int main_init(void)
     usbInit();
 
     //return to Remora
+    return 0;
 }
 
 /**
