@@ -83,8 +83,8 @@ void Stepgen::makePulses()
 
 	this->isEnabled = ((rxData->jointEnable & this->mask) != 0);
 
-	//if (this->isEnabled == true)  
-	if(1)												// this Step generator is enables so make the pulses
+	
+	if (this->isEnabled == true)       											// this Step generator is enables so make the pulses
 	{
 		this->frequencyCommand = rxData->jointFreqCmd[jointNumber];             // Get the latest frequency command via pointer to the data source
 		//this->frequencyCommand = 60000;

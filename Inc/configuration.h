@@ -1,18 +1,18 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#define PRU_BASEFREQ    	80000           // PRU Base thread ISR update frequency (hz)
+#define PRU_BASEFREQ    	60000           // PRU Base thread ISR update frequency (hz)
 #define PRU_SERVOFREQ       1000            // PRU Servo thread ISR update freqency (hz)  Ideally this is 2x higher than the servo thread frequency of LCNC.
 
-#define BASE_SLICE          0               // RP2040 PWM Slice used by the Base thread
-#define SERVO_SLICE         1               // RP2040 PWM Slice used by the Servo thread
+#define BASE_SLICE          0               // IRQ Slice used by the Base thread
+#define SERVO_SLICE         1               // IRQ Slice used by the Servo thread
 
 #define STEPBIT     		22            	// bit location in DDS accum
 #define STEP_MASK   		(1L<<STEPBIT)
 
 #define JSON_BUFF_SIZE	    10000			// Jason dynamic buffer size
 
-#define JOINTS			    5				// Number of joints - set this the same as LinuxCNC HAL compenent. Max 8 joints
+#define JOINTS			    6				// Number of joints - set this the same as LinuxCNC HAL compenent. Max 8 joints
 #define VARIABLES           2             	// Number of command values - set this the same as the LinuxCNC HAL compenent
 
 #define PRU_DATA		    0x64617461 	    // "data" SPI payload

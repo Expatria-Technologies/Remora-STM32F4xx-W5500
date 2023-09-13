@@ -52,8 +52,8 @@ static volatile bool spin_lock = false;
  */
 static inline void wizchip_select(void)
 {
-    if(prescaler != WIZCHIP_SPI_PRESCALER)
-        prescaler = spi_set_speed(WIZCHIP_SPI_PRESCALER);
+    //if(prescaler != WIZCHIP_SPI_PRESCALER)
+    //    prescaler = spi_set_speed(WIZCHIP_SPI_PRESCALER);
 
     HAL_GPIO_WritePin(hw.cs.port, hw.cs.pin, 0);
 }
@@ -62,8 +62,8 @@ static inline void wizchip_deselect(void)
 {
     HAL_GPIO_WritePin(hw.cs.port, hw.cs.pin, 1);
 
-    if(prescaler != WIZCHIP_SPI_PRESCALER)
-        spi_set_speed(prescaler);
+    //if(prescaler != WIZCHIP_SPI_PRESCALER)
+    //    spi_set_speed(prescaler);
 }
 
 void wizchip_reset()

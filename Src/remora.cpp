@@ -598,6 +598,9 @@ int main()
     HAL_Delay(1000 * 3); // wait for 3 seconds
 
     printf("Remora for STM32F4xx starting...\n\n\r");
+    uint32_t core_clock = HAL_RCC_GetSysClockFreq();
+
+    printf("CPU Clock: %d...\n\n\r", core_clock);
 
     HAL_Delay(100);
 
@@ -622,7 +625,6 @@ int main()
     {
         runThreads();
         EthernetTasks();
-        sys_check_timeouts();
 
         if (newJson)
         {
@@ -678,7 +680,6 @@ void EthernetInit()
     // Set the default interface and bring it up
     netif_set_link_up(&g_netif);
     netif_set_up(&g_netif);
-
 }
 
 
@@ -712,9 +713,9 @@ void EthernetTasks()
                 pbuf_free(p);
             }
         }
+        sys_check_timeouts();        
     }
 }
-
 
 void udpServerInit(void)
 {
