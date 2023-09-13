@@ -1,0 +1,12 @@
+{
+	"Board": "FlexiHAL",
+	"Modules":[
+	{
+	"Thread": "Servo",
+	"Type": "Blink",
+		"Comment":			"Blinky",
+		"Pin":				"PC13",
+		"Frequency": 		4
+	}
+	]
+}

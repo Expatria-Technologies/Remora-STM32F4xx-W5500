@@ -45,7 +45,7 @@
 #define LWIP_ICMP 1
 #define LWIP_UDP 1
 #define LWIP_TCP 1
-#define MEM_SIZE 2048
+//#define MEM_SIZE 2048
 
 #ifndef MEM_SIZE
 #define MEM_SIZE (16*1024)
@@ -59,6 +59,7 @@
 #ifndef PBUF_POOL_SIZE
 #define PBUF_POOL_SIZE 24
 #endif
+
 
 
 // disable ACD to avoid build errors

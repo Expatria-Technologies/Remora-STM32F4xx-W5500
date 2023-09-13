@@ -357,60 +357,6 @@ void configThreads()
 }
 
 
-void loadStaticConfig()
-{
-    printf("\n4. Loading static configuration\n");
-
-    // Servo thread modules
-
-    //rxData_t* pruRxData = currentRxPacket;
-    //txData_t* pruTxData = currentTxPacket;
-
-    rxData_t* pruRxData = getCurrentRxBuffer(&rxPingPongBuffer);
-	txData_t* pruTxData = getCurrentTxBuffer(&txPingPongBuffer);
-    
-    // Ethernet communication monitoring
-	comms = new RemoraComms();
-	servoThread->registerModule(comms);
-
-    //loadStaticBlink();
-	for (int i = 0; i < sizeof(BlinkConfigs)/sizeof(*BlinkConfigs); i++) {
-        printf("\nMake Blink at pin %s\n", BlinkConfigs[i].Comment, BlinkConfigs[i].Pin, BlinkConfigs[i].Freq);
-        Module* blink = new Blink(BlinkConfigs[i].Pin, servo_freq, BlinkConfigs[i].Freq);
-        servoThread->registerModule(blink);
-    }
-
-    //loadStaticIO();
-    //Digital Outputs
-    for (int i = 0; i < sizeof(DOConfigs)/sizeof(*DOConfigs); i++) {
-        printf("\nCreate digital output for %s\n", DOConfigs[i].Comment);
-        Module* digitalOutput = new DigitalPin(1, DOConfigs[i].Pin, DOConfigs[i].DataBit, DOConfigs[i].Invert, DOConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalOutput);
-    }
-  
-    //Digital Inputs
-    for (int i = 0; i < sizeof(DIConfigs)/sizeof(*DIConfigs); i++) {
-        printf("\nCreate digital input for %s\n", DIConfigs[i].Comment);
-        Module* digitalInput = new DigitalPin(0, DIConfigs[i].Pin, DIConfigs[i].DataBit, DIConfigs[i].Invert, DIConfigs[i].Modifier); //data pointer, mode (1 = output, 0 = input), pin name, bit number, invert, modifier
-        servoThread->registerModule(digitalInput);
-    }
-
-    // Base thread modules
-    //loadStaticStepgen();
-    for (int i = 0; i < sizeof(StepgenConfigs)/sizeof(*StepgenConfigs); i++) {
-        printf("\nCreate step generator for Joint %d\n", i);
-        //I don't think these next 3 lines do anything anymore.
-        //ptrJointFreqCmd[i] = &pruRxData->jointFreqCmd[i];
-        //ptrJointFeedback[i] = &pruTxData->jointFeedback[i];
-        //ptrJointEnable = &pruRxData->jointEnable;
- 
-        Module* stepgen = new Stepgen(PRU_BASEFREQ, StepgenConfigs[i].JointNumber, StepgenConfigs[i].StepPin, StepgenConfigs[i].DirectionPin, STEPBIT);
-        baseThread->registerModule(stepgen);
-        baseThread->registerModulePost(stepgen);
-    }
-}
-
-
 void loadModules()
 {
     printf("\n4. Loading modules\n");
@@ -499,14 +445,9 @@ void runThreads(void)
             configThreads();
             createThreads();
             //debugThreadHigh();
-            if (staticConfig)
-            {
-                loadStaticConfig();
-            }
-            else
-            {
-                loadModules();
-            }
+
+            loadModules();
+
             //debugThreadLow();
 
             currentState = ST_START;
@@ -818,13 +759,14 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
-            while (baseThread->semaphore);
-            baseThread->semaphore = true;
+
             //don't need to wait for the servo thread.
 
+            //disable interrupts and swap the buffers.
+            __disable_irq();
             swapTxBuffers(&txPingPongBuffer);
-
-            baseThread->semaphore = false;            
+            __enable_irq();
+        
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_DATA;
@@ -834,14 +776,19 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-            while (baseThread->semaphore);
-            baseThread->semaphore = true;
+
             //don't need to wait for the servo thread.
+
+            //disable interrupts and swap the buffers.
+
+
             //feedback data will now go into the alternate buffer
+            __disable_irq();
             swapTxBuffers(&txPingPongBuffer);
             //frequency command will now come from the new data
             swapRxBuffers(&rxPingPongBuffer);
-            baseThread->semaphore = false;               
+            __enable_irq();
+             
             
             //txBuffer pointer is now directed at the 'old' data for transmission
             txBuffer->header = PRU_ACKNOWLEDGE;

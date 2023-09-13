@@ -104,7 +104,7 @@ static void SystemClock_Config(void)
     Error_Handler();
   } 
 
-    #define FLASH_LATENCY FLASH_LATENCY_5
+    #define FLASH_LATENCY FLASH_LATENCY_4
 
   #elif defined(NUCLEO_F446)
 
