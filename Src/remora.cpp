@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "configuration.h"
 #include "remora.h"
-#include "boardconfig.h"
+//#include "boardconfig.h"
 
 #include "crc32.h"
 
