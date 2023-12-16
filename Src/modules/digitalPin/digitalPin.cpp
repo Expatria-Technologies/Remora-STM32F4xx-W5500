@@ -18,6 +18,27 @@ void createDigitalPin()
 
     int mod;
     bool inv;
+    
+    if (!strcmp(modifier,"Open Drain"))
+    {
+        mod = OPENDRAIN;
+    }
+    else if (!strcmp(modifier,"Pull Up"))
+    {
+        mod = PULLUP;
+    }
+    else if (!strcmp(modifier,"Pull Down"))
+    {
+        mod = PULLDOWN;
+    }
+    else if (!strcmp(modifier,"Pull None"))
+    {
+        mod = PULLNONE;
+    }
+    else
+    {
+        mod = NONE;
+    }
 
     if (!strcmp(invert,"True"))
     {
