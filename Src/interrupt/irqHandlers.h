@@ -3,7 +3,7 @@
 
 extern "C" {
 	// Main stepper driver
-	void STEPPER_TIMER_IRQHandler (void)
+	/*void STEPPER_TIMER_IRQHandler (void)
 	{
 		STEPPER_TIMER->SR &= ~TIM_SR_UIF;                 // Clear UIF flag
 		//STEPPER_TIMER->ARR = BASE_PERIOD;				  //schedule next IRQ
@@ -23,6 +23,17 @@ extern "C" {
 		//PULSE_TIMER->CR1 |= TIM_CR1_CEN;	
 
 		Interrupt::SLICE1_Wrapper();		
-	}
+	}*/
+
+	void SERVO_TIMER_IRQHandler (void)
+	{
+		SERVO_TIMER->SR &= ~TIM_SR_UIF;                 // Clear UIF flag
+		//SERVO_TIMER->ARR = SERVO_PERIOD;				//schedule next IRQ
+		//SERVO_TIMER->CNT = 0;
+		//SERVO_TIMER->EGR = TIM_EGR_UG;
+		//SERVO_TIMER->CR1 |= TIM_CR1_CEN;	
+
+		Interrupt::SLICE2_Wrapper();		
+	}	
 	
 }

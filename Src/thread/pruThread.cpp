@@ -15,7 +15,7 @@ pruThread::pruThread(uint8_t slice, uint32_t frequency) :
 	slice(slice),
 	frequency(frequency)
 {
-	printf("Creating thread %d\n", this->frequency);
+	printf("Creating thread %d\n", (int) this->frequency);
 	
 	if (this->slice == 0){
 		__HAL_RCC_GPIOB_CLK_ENABLE();

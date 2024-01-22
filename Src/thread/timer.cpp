@@ -48,7 +48,7 @@ void pruTimer::startTimer(void)
  // Single-shot 100 ns per tick
     //base thread
     if (this->slice == 0){
-        STEPPER_TIMER_CLOCK_ENA();
+        /*TEPPER_TIMER_CLOCK_ENA();
                 
         STEPPER_TIMER->CR1 &= ~TIM_CR1_CEN;
         STEPPER_TIMER->CR1 |= TIM_CR1_DIR;
@@ -64,35 +64,35 @@ void pruTimer::startTimer(void)
         NVIC_EnableIRQ(STEPPER_TIMER_IRQn);
 
         STEPPER_TIMER->EGR = TIM_EGR_UG;
-        STEPPER_TIMER->CR1 |= TIM_CR1_CEN;        
+        STEPPER_TIMER->CR1 |= TIM_CR1_CEN;*/       
     } 
 
  // Single-shot 100 ns per tick
     //servo thread
         else if (this->slice == 1){
-        /*PULSE_TIMER_CLOCK_ENA();
-        PULSE_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
-        PULSE_TIMER->PSC = 86;
-        PULSE_TIMER->ARR = SERVO_PERIOD;
-        PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
-        PULSE_TIMER->CNT = 0;
-        PULSE_TIMER->DIER |= TIM_DIER_UIE;*/
+        /*SERVO_TIMER_CLOCK_ENA();
+        SERVO_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
+        SERVO_TIMER->PSC = 86;
+        SERVO_TIMER->ARR = SERVO_PERIOD;
+        SERVO_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
+        SERVO_TIMER->CNT = 0;
+        SERVO_TIMER->DIER |= TIM_DIER_UIE;*/
 
-        PULSE_TIMER->CR1 &= ~TIM_CR1_CEN;
-        PULSE_TIMER->CR1 |= TIM_CR1_DIR;
-        PULSE_TIMER->SR &= ~TIM_SR_UIF;
+        SERVO_TIMER->CR1 &= ~TIM_CR1_CEN;
+        SERVO_TIMER->CR1 |= TIM_CR1_DIR;
+        SERVO_TIMER->SR &= ~TIM_SR_UIF;
 
-        PULSE_TIMER->PSC = 86;
-        PULSE_TIMER->ARR = SERVO_PERIOD;        
+        SERVO_TIMER->PSC = 86;
+        SERVO_TIMER->ARR = SERVO_PERIOD;        
         
-        PULSE_TIMER->CNT = 0;
-        PULSE_TIMER->DIER |= TIM_DIER_UIE;
+        SERVO_TIMER->CNT = 0;
+        SERVO_TIMER->DIER |= TIM_DIER_UIE;
 
-        HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 2, 2);
-        NVIC_EnableIRQ(PULSE_TIMER_IRQn);
+        HAL_NVIC_SetPriority(SERVO_TIMER_IRQn, 2, 2);
+        NVIC_EnableIRQ(SERVO_TIMER_IRQn);
 
-        PULSE_TIMER->EGR = TIM_EGR_UG;
-        PULSE_TIMER->CR1 |= TIM_CR1_CEN;        
+        SERVO_TIMER->EGR = TIM_EGR_UG;
+        SERVO_TIMER->CR1 |= TIM_CR1_CEN;        
     } else{
         printf("	Invalid Slice\r\n");
     }

@@ -27,6 +27,7 @@ class Interrupt
 		// wrapper functions to ISR_Handler()
 		static void SLICE0_Wrapper();
         static void SLICE1_Wrapper();
+		static void SLICE2_Wrapper();
 
 		virtual void ISR_Handler(void) = 0;
 

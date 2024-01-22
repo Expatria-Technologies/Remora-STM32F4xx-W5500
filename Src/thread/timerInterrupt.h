@@ -1,9 +1,14 @@
 #ifndef TIMERINTERRUPT_H
 #define TIMERINTERRUPT_H
 
-// Derived class for timer interrupts
+#include <stdint.h>
+#include "timer.h"
+#include "pruThread.h"
+#include "pruTimer.h"
 
-class pruTimer; // forward declaration
+class TimerInterrupt; // forward declaration
+
+// Derived class for timer interrupts
 
 class TimerInterrupt : public Interrupt
 {

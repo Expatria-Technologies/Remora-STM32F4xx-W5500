@@ -24,6 +24,27 @@
 
 #define DATA_ERR_MAX         40
 
+#define X_STEP_PORT             GPIOA
+#define X_STEP_PIN              3
+#define Y_STEP_PORT             GPIOC
+#define Y_STEP_PIN              1
+#define Z_STEP_PORT             GPIOB
+#define Z_STEP_PIN              8
+#define A_STEP_PORT            GPIOD
+#define A_STEP_PIN             2
+#define B_STEP_PORT            GPIOB
+#define B_STEP_PIN             14
+
+#define X_DIRECTION_PORT        GPIOC
+#define X_DIRECTION_PIN         2
+#define Y_DIRECTION_PORT        GPIOC
+#define Y_DIRECTION_PIN         0
+#define Z_DIRECTION_PORT        GPIOC
+#define Z_DIRECTION_PIN         15
+#define A_DIRECTION_PORT       GPIOC
+#define A_DIRECTION_PIN        12
+#define B_DIRECTION_PORT       GPIOB
+#define B_DIRECTION_PIN        15
 
 // Data buffer configuration
 #define BUFFER_SIZE 		68            	// Size of recieve buffer - same as HAL component, 64

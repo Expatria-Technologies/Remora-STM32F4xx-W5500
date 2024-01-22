@@ -1,7 +1,7 @@
 #ifndef PRUTHREAD_H
 #define PRUTHREAD_H
 
-#include "timer.h"
+#include "pruTimer.h"
 
 // Standard Template Library (STL) includes
 #include <vector>

@@ -105,7 +105,24 @@ RxPingPongBuffer rxPingPongBuffer;
 TxPingPongBuffer txPingPongBuffer;
 
 // Json config file stuff
+#if BOARD_FLEXI_HAL
+const char* defaultConfig = R"( 
+{
+	"Board": "FlexiHAL",
+	"Modules":[
+	{
+	"Thread": "Servo",
+	"Type": "Blink",
+		"Comment":			"Blinky",
+		"Pin":				"PC13",
+		"Frequency": 		4
+	}
+	]
+}
+)";
+#else
 const char defaultConfig[] = DEFAULT_CONFIG;
+#endif
 
 // 512 bytes of metadata in front of actual JSON file
 typedef struct

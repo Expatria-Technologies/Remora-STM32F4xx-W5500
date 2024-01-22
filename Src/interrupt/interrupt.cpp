@@ -8,7 +8,6 @@ Interrupt* Interrupt::ISRVectorTable[] = {0};
 // Constructor
 Interrupt::Interrupt(void){}
 
-
 // Methods
 
 void Interrupt::Register(int interruptNumber, Interrupt* intThisPtr)
@@ -25,4 +24,9 @@ void Interrupt::SLICE0_Wrapper(void)
 void Interrupt::SLICE1_Wrapper(void)
 {
 	ISRVectorTable[1]->ISR_Handler();
+}
+
+void Interrupt::SLICE2_Wrapper(void)
+{
+	ISRVectorTable[2]->ISR_Handler();
 }

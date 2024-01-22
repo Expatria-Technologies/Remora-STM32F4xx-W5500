@@ -1,7 +1,5 @@
 #include "../interrupt/interrupt.h"
 #include "timerInterrupt.h"
-#include "timer.h"
-
 
 TimerInterrupt::TimerInterrupt(int interruptNumber, pruTimer* owner)
 {

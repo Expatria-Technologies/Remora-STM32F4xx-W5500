@@ -1,5 +1,14 @@
 Import("env")
 
+# Custom HEX from ELF
+env.AddPostAction(
+    "$BUILD_DIR/${PROGNAME}.elf",
+    env.VerboseAction(" ".join([
+        "$OBJCOPY", "-O", "ihex", "-R", ".eeprom", 
+        '"$BUILD_DIR/${PROGNAME}.elf"', '"$BUILD_DIR/${PROGNAME}.hex"'
+    ]), "Building $BUILD_DIR/${PROGNAME}.hex")
+)
+
 def after_build(source, target, env): 
     print("[From Script] Finished building!!")
     env.Replace(PROGNAME="FLEXI_HAL_%s" % env.GetProjectOption("custom_prog_version")+"_"+env.GetProjectOption("grblhal_driver_version"))

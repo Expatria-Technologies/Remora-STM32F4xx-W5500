@@ -30,7 +30,6 @@
 #define timerCLKENA(t) timercken(t)
 #define timercken(t) __HAL_RCC_TIM ## t ## _CLK_ENABLE
 
-
 #define STEPPER_TIMER_N             5
 #define STEPPER_TIMER               timer(STEPPER_TIMER_N)
 #define STEPPER_TIMER_IRQn          timerINT(STEPPER_TIMER_N)
@@ -43,28 +42,10 @@
 #define PULSE_TIMER_IRQHandler      timerHANDLER(PULSE_TIMER_N)
 #define PULSE_TIMER_CLOCK_ENA       timerCLKENA(PULSE_TIMER_N)
 
-class TimerInterrupt; // forward declaration
-class pruThread; // forward declaration
-
-class pruTimer
-{
-	friend class TimerInterrupt;
-
-	private:
-
-		TimerInterrupt* 	interruptPtr;
-		uint8_t				slice;
-		uint32_t 			frequency;
-		pruThread* 			timerOwnerPtr;
-
-		void startTimer(void);
-		void timerTick();			// Private timer tiggered method
-
-	public:
-
-		pruTimer(uint8_t slice, uint32_t frequency, pruThread* ownerPtr);
-        void stopTimer(void);
-
-};
+#define SERVO_TIMER_N               7
+#define SERVO_TIMER                 timer(SERVO_TIMER_N)
+#define SERVO_TIMER_IRQn            timerINT(SERVO_TIMER_N)
+#define SERVO_TIMER_IRQHandler      timerHANDLER(SERVO_TIMER_N)
+#define SERVO_TIMER_CLOCK_ENA       timerCLKENA(SERVO_TIMER_N)
 
 #endif
