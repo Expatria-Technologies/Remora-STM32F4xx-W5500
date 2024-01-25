@@ -26,6 +26,9 @@ Then upload your configuration file to the FlexiHAL using the upload_config.py s
 ```
 python3 upload_config.py FlexiHAL-config.txt
 ```
+A basic configuration to get started is located here: 
+
+https://github.com/Expatria-Technologies/linuxcnc_configs/tree/main/flexi-hal-uFlexiNet
 
 All credit to Scotta and Terje IO as this project draws heavily from Remora (especially the RP2040 and STM32-W5500 ports) and also GRBLHAL (especially for the SPI DMA and networking stack)
 
