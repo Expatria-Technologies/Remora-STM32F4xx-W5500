@@ -337,4 +337,10 @@ void PULSE_TIMER_IRQHandler (void)
         stepperSetStepOutputs((axes_signals_t){0}); // end step pulse
 }
 
+void init_stepper (void){
+    pulse_length = (uint32_t)(10.0f * (5)) - 1;
+    PULSE_TIMER->ARR = pulse_length;
+    PULSE_TIMER->EGR = TIM_EGR_UG;
+}
+
 //! \endcond

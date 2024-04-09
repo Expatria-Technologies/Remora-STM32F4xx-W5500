@@ -171,4 +171,6 @@ typedef struct stepper {
     segment_t *exec_segment;        //!< Pointer to the segment being executed.
 } stepper_t;
 
+void init_stepper (void);
+
 #endif
