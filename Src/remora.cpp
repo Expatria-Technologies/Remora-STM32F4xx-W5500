@@ -249,6 +249,17 @@ void moveJson()
 
 }
 
+void clearJsonUploadArea()
+{
+        HAL_FLASH_Unlock();
+
+	// erase the old JSON config file
+    printf("Erase upload area\n");
+	FLASH_If_Erase(JSON_UPLOAD_ADDRESS);
+
+         HAL_FLASH_Lock();
+}
+
 
 void jsonFromFlash(std::string json)
 {
@@ -617,6 +628,8 @@ int main()
     IP4_ADDR(&g_mask, 255, 255, 255, 0);
     IP4_ADDR(&g_gateway, 10, 10, 10, 1);    
 
+    //clearJsonUploadArea();
+
     EthernetInit();
     udpServerInit();
     IAP_tftpd_init();
@@ -639,13 +652,14 @@ int main()
             {
             printf("Moving new config file to Flash storage\n");
             moveJson();
+            clearJsonUploadArea();
 
             // force a reset to load new JSON configuration
             printf("Forceing a reboot now....\n");
-            NVIC_SystemReset();
-            for (;;) {
-                __NOP();
-            }
+            HAL_NVIC_SystemReset();
+            //for (;;) {
+            //    __NOP();
+            //}
             }
         }
     }
@@ -828,16 +842,6 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 
 
 #ifdef USB_DEBUG
-/*int _write(int file, char *data, int len)
-{
-   // arbitrary timeout 1000
-
-      while(CDC_Transmit_FS((uint8_t*)data, len) == USBD_BUSY);
-
-   // return # of bytes written - as best we can tell
-   return (len);
-}*/
-
 extern "C" {
   __attribute__((weak))
   int _write(int file, char *ptr, int len)
