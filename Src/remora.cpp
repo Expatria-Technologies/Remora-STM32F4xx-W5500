@@ -35,6 +35,9 @@ extern "C"
 #include "socket.h"
 #include "w5x00_spi.h"
 #include "w5x00_lwip.h"
+#ifdef USB_DEBUG
+#include "usb_serial.h"
+#endif
 }
 
 // Ethenet (LWIP)
@@ -594,6 +597,9 @@ static txData_t* getAltTxBuffer(TxPingPongBuffer* buffer) {
 int main()
 {
     main_init();
+    #if USB_DEBUG
+      usbInit();
+    #endif
 
     HAL_Delay(1000 * 3); // wait for 3 seconds
 
@@ -819,3 +825,24 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	// Free the p buffer
 	pbuf_free(p);
 }
+
+
+#ifdef USB_DEBUG
+/*int _write(int file, char *data, int len)
+{
+   // arbitrary timeout 1000
+
+      while(CDC_Transmit_FS((uint8_t*)data, len) == USBD_BUSY);
+
+   // return # of bytes written - as best we can tell
+   return (len);
+}*/
+
+extern "C" {
+  __attribute__((weak))
+  int _write(int file, char *ptr, int len)
+  {
+        while(CDC_Transmit_FS((uint8_t*)ptr, len) == USBD_BUSY);
+    }
+}
+#endif
