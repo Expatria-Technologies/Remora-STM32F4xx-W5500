@@ -40,7 +40,7 @@
 		"Mode":				"Input",
 		"Data Bit":			0,
 		"Invert":			"False"
-	}	,
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -58,7 +58,7 @@
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -67,7 +67,7 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}	
+	},	
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -76,7 +76,7 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -85,7 +85,7 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -94,7 +94,7 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -103,7 +103,7 @@
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -112,7 +112,7 @@
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -121,7 +121,7 @@
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -130,7 +130,7 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -139,11 +139,11 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Spindle PWM",
-		"Comment":			"Spindle PWM",
+		"Comment":			"SPINDLE_PWM",
 		"SP[i]":			0
 	}	
 	]

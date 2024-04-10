@@ -71,6 +71,7 @@ extern "C"
 #include "modules/debug/debug.h"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
+#include "modules/pwm/spindlePwm.h"
 
 
 /***********************************************************************
@@ -420,7 +421,7 @@ void loadModules()
 			}
         	else if (!strcmp(type,"Spindle PWM"))
 			{
-				//createSpindlePWM();
+				createSpindlePWM();
 			}
         }
     }

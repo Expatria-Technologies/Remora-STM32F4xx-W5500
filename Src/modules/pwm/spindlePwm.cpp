@@ -17,6 +17,9 @@ void createSpindlePWM()
     //ptrSetPoint[sp] = &rxData.setPoint[sp];
     Module* spindle = new SpindlePWM(sp);
     servoThread->registerModule(spindle);
+
+	printf("Make Spindle PWM %d\n", sp);
+
 }
 
 
@@ -58,14 +61,14 @@ SpindlePWM::SpindlePWM(int setpoint)
 	HAL_TIM_PWM_ConfigChannel(&this->htim, &sConfigOC, TIM_CHANNEL_1);
 
 	__HAL_RCC_GPIOA_CLK_ENABLE();
-	/**TIM2 GPIO Configuration
-	PA0     ------> TIM5_CH1 //need to change to PA8
+	/**TIM1 GPIO Configuration
+	PA8     ------> TIM1_CH1
 	*/
 	GPIO_InitStruct.Pin = GPIO_PIN_8;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
+	GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	HAL_TIM_PWM_Start(&this->htim, TIM_CHANNEL_1);
