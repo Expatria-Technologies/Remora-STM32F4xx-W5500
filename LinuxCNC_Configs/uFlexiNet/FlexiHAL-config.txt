@@ -139,6 +139,12 @@
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}		
+	}
+	{
+	"Thread": "Servo",
+	"Type": "Spindle PWM",
+		"Comment":			"Spindle PWM",
+		"SP[i]":			0
+	}	
 	]
 }

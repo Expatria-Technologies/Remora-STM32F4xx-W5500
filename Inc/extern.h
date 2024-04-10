@@ -7,6 +7,9 @@
 #include "lib/ArduinoJson6/ArduinoJson.h"
 #include "thread/pruThread.h"
 
+extern volatile uint16_t*  ptrNVMPGInputs;
+extern volatile mpgData_t* ptrMpgData;
+extern Module* MPG;
 
 extern uint32_t base_freq;
 extern uint32_t servo_freq;

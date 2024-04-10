@@ -104,8 +104,16 @@ uint8_t noDataCount;
 pruThread* servoThread;
 pruThread* baseThread;
 RemoraComms* comms;
+Module* MPG;
 RxPingPongBuffer rxPingPongBuffer;
 TxPingPongBuffer txPingPongBuffer;
+
+volatile bool cmdReceived;
+volatile bool mpgReceived;
+mpgData_t mpgData;
+
+volatile uint16_t* ptrNVMPGInputs;
+volatile mpgData_t* ptrMpgData = &mpgData;
 
 // Json config file stuff
 const char defaultConfig[] = DEFAULT_CONFIG;
