@@ -1,5 +1,5 @@
 {
-	"Board": "PICOBOB",
+	"Board": "FlexiHAL",
 	"Modules":[
 	{
 	"Thread": "Servo",
@@ -63,7 +63,7 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"STEP_EN",
-		"Pin":				"PC13",
+		"Pin":				"PA14",
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
@@ -72,7 +72,7 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"STEP_EN_Z",
-		"Pin":				"PC13",
+		"Pin":				"PA13",
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
@@ -81,7 +81,7 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"COOLANT",
-		"Pin":				"PC13",
+		"Pin":				"PC09",
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
@@ -90,7 +90,7 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"MIST",
-		"Pin":				"PC13",
+		"Pin":				"PA07",
 		"Mode":				"Output",
 		"Data Bit":			2,
 		"Invert":			"False"
@@ -99,7 +99,7 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"FEED_HOLD",
-		"Pin":				"PC13",
+		"Pin":				"PC08",
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
@@ -108,7 +108,7 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"CYCLE_START",
-		"Pin":				"PC13",
+		"Pin":				"PC11",
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
@@ -117,10 +117,28 @@
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"PROBE",
-		"Pin":				"PC13",
+		"Pin":				"PB07",
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}	
+	}
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"SPINDLE_EN",
+		"Pin":				"PB02",
+		"Mode":				"Output",
+		"Data Bit":			2,
+		"Invert":			"False"
+	}
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"SPINDLE_DIR",
+		"Pin":				"PB01",
+		"Mode":				"Output",
+		"Data Bit":			2,
+		"Invert":			"False"
+	}		
 	]
 }
