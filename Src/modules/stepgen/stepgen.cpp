@@ -51,6 +51,7 @@ Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string step, std::str
 	this->stepPin = new Pin(this->step, OUTPUT);
 	this->directionPin = new Pin(this->direction, OUTPUT);
 	this->DDSaccumulator = 0;
+	this->rawCount = 0;
 	this->frequencyScale = (float)(1 << this->stepBit) / (float)threadFreq;
 	this->mask = 1 << this->jointNumber;
 	this->isEnabled = false;
@@ -93,7 +94,7 @@ void Stepgen::makePulses()
 		this->DDSaccumulator += this->DDSaddValue;           	  				// Update the DDS accumulator with the new add value
 		stepNow ^= this->DDSaccumulator;                          				// Test for changes in the low half of the DDS accumulator
 		stepNow &= (1L << this->stepBit);                         				// Check for the step bit
-		this->rawCount = this->DDSaccumulator >> this->stepBit;   				// Update the position raw count
+		//this->rawCount = this->DDSaccumulator >> this->stepBit;   				// Update the position raw count
 
 		if (this->DDSaddValue > 0)												// The sign of the DDS add value indicates the desired direction
 		{
@@ -104,12 +105,26 @@ void Stepgen::makePulses()
 			this->isForward = false;
 		}
 
-		if (stepNow)
+        if (this->lastDir != this->isForward)
+        {
+            //Direction has changed, flip dir pin and do not step this iteration to give some setup time. At a 160kHz base thread freq, this should be about 6.25us, at 120kHz 8.33us (1 period). JMC servos requre 6us. TODO - make hold time configurable.
+            this->lastDir = this->isForward;
+            this->directionPin->set(this->isForward);             		// Set direction pin
+        }else if (stepNow)
 		{
-			this->directionPin->set(this->isForward);             		    // Set direction pin
-			this->stepPin->set(true);										// Raise step pin - A4988 / DRV8825 stepper drivers only need 200ns setup time
-			txData->jointFeedback[jointNumber] = this->DDSaccumulator;       // Update position feedback via pointer to the data receiver
-			//txData->jointFeedback[jointNumber] = 0;
+			//this->directionPin->set(this->isForward);             		    // Set direction pin
+			//this->stepPin->set(true);										// Raise step pin - A4988 / DRV8825 stepper drivers only need 200ns setup time
+			//txData->jointFeedback[jointNumber] = this->DDSaccumulator;       // Update position feedback via pointer to the data receiver
+			//txData->jointFeedback[jointNumber] = 10268;       // Update position feedback via pointer to the data receiver
+            if (this->isForward)
+            {
+                this->rawCount++;
+            }
+            else
+            {
+                this->rawCount--;
+            }
+            txData->jointFeedback[jointNumber] = this->rawCount;							// Update position feedback via pointer to the data receiver
 			this->isStepping = true;
 		}
 	}

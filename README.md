@@ -13,13 +13,13 @@ https://github.com/Expatria-Technologies/remora-flexi-hal
 
 From your linuxcnc home folder, start by cloning the Remora-NVEM repo and move to the Remora-nv component folder.
 ```
-git clone https://github.com/Expatria-Technologies/Remora-NVEM.git
-cd Remora-NVEM/LinuxCNC/Components/Remora-nv
+git clone https://github.com/Expatria-Technologies/Remora.git
+cd Remora/LinuxCNC/Components/Remora-eth
 ```
 
 Compile the component using halcompile
 ```
-sudo halcompile --install remora-nv.c
+sudo halcompile --install remora-eth.c
 ```
 
 Then upload your configuration file to the FlexiHAL using the upload_config.py script that should be in your configuration folder:
