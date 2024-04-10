@@ -62,10 +62,64 @@
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
+		"Comment":			"A_Limit",
+		"Pin":				"PB06",
+		"Mode":				"Input",
+		"Data Bit":			3,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"B_Limit",
+		"Pin":				"PC14",
+		"Mode":				"Input",
+		"Data Bit":			4,
+		"Invert":			"False"
+	},	
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"FEED_HOLD",
+		"Pin":				"PC08",
+		"Mode":				"Input",
+		"Data Bit":			5,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"CYCLE_START",
+		"Pin":				"PC11",
+		"Mode":				"Input",
+		"Data Bit":			6,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"HALT",
+		"Pin":				"PB12",
+		"Mode":				"Input",
+		"Data Bit":			7,
+		"Invert":			"True"
+	},	
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"PROBE",
+		"Pin":				"PB07",
+		"Mode":				"Input",
+		"Data Bit":			8,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
 		"Comment":			"STEP_EN",
 		"Pin":				"PA14",
 		"Mode":				"Output",
-		"Data Bit":			2,
+		"Data Bit":			0,
 		"Invert":			"False"
 	},	
 	{
@@ -74,7 +128,7 @@
 		"Comment":			"STEP_EN_Z",
 		"Pin":				"PA13",
 		"Mode":				"Output",
-		"Data Bit":			2,
+		"Data Bit":			1,
 		"Invert":			"False"
 	},
 	{
@@ -92,34 +146,7 @@
 		"Comment":			"MIST",
 		"Pin":				"PA07",
 		"Mode":				"Output",
-		"Data Bit":			2,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"FEED_HOLD",
-		"Pin":				"PC08",
-		"Mode":				"Input",
-		"Data Bit":			2,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"CYCLE_START",
-		"Pin":				"PC11",
-		"Mode":				"Input",
-		"Data Bit":			2,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"PROBE",
-		"Pin":				"PB07",
-		"Mode":				"Input",
-		"Data Bit":			2,
+		"Data Bit":			3,
 		"Invert":			"False"
 	},
 	{
@@ -128,7 +155,7 @@
 		"Comment":			"SPINDLE_EN",
 		"Pin":				"PB02",
 		"Mode":				"Output",
-		"Data Bit":			2,
+		"Data Bit":			4,
 		"Invert":			"False"
 	},
 	{
@@ -137,9 +164,45 @@
 		"Comment":			"SPINDLE_DIR",
 		"Pin":				"PB01",
 		"Mode":				"Output",
-		"Data Bit":			2,
+		"Data Bit":			5,
 		"Invert":			"False"
 	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"AUXOUT0",
+		"Pin":				"PB13",
+		"Mode":				"Output",
+		"Data Bit":			6,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"AUXOUT1",
+		"Pin":				"PB00",
+		"Mode":				"Output",
+		"Data Bit":			7,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"AUXOUT2",
+		"Pin":				"PA04",
+		"Mode":				"Output",
+		"Data Bit":			8,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"AUXOUT3",
+		"Pin":				"PA06",
+		"Mode":				"Output",
+		"Data Bit":			9,
+		"Invert":			"False"
+	},	
 	{
 	"Thread": "Servo",
 	"Type": "Spindle PWM",
