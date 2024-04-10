@@ -141,6 +141,7 @@ void EthernetInit();
 void udpServerInit();
 void EthernetTasks();
 void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
+void udp_rs485_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
 
 /* Network */
@@ -764,15 +765,32 @@ void udpServerInit(void)
    {
 	   udp_remove(upcb);
    }
-}
 
+#ifdef SOCAT_RS485
+   // UDP control for RS485 data
+
+   struct udp_pcb *upcb_rs485;
+
+   upcb_rs485 = udp_new();
+   err = udp_bind(upcb_rs485, &g_ip, 27183);  // 27183 is the rs485 UDP port
+
+   /* 3. Set a receive callback for the upcb */
+   if(err == ERR_OK)
+   {
+	   udp_recv(upcb_rs485, udp_rs485_data_callback, NULL);
+   }
+   else
+   {
+	   udp_remove(upcb_rs485);
+   }
+#endif
+
+}
 
 void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
 	int txlen = 0;
-    int n;
 	struct pbuf *txBuf;
-    uint32_t status;
 
     //received data from host needs to go into the inactive buffer
     rxData_t* rxBuffer = getAltRxBuffer(&rxPingPongBuffer);
@@ -789,9 +807,7 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
-
             //don't need to wait for the servo thread.
-
             //disable interrupts and swap the buffers.
             __disable_irq();
             swapTxBuffers(&txPingPongBuffer);
@@ -806,12 +822,8 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-
             //don't need to wait for the servo thread.
-
             //disable interrupts and swap the buffers.
-
-
             //feedback data will now go into the alternate buffer
             __disable_irq();
             swapTxBuffers(&txPingPongBuffer);
@@ -849,6 +861,24 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	pbuf_free(p);
 }
 
+#ifdef SOCAT_RS485
+void udp_rs485_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+{
+	int txlen = 0;
+	struct pbuf *txBuf;
+
+    //received data from host needs to be sent out the uart, for now print to screen.
+    printf("RS485 bytes %d: %s\r\n", p->len, p->payload);
+
+	// Free the p buffer
+	pbuf_free(p);
+}
+
+void udp_rs485_data_send(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+{
+
+}
+#endif
 
 #ifdef USB_DEBUG
 extern "C" {
