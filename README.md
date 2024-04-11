@@ -35,7 +35,7 @@ https://github.com/Expatria-Technologies/linuxcnc_configs/tree/main/flexi-hal-uF
 To use the RS485 interface on the FlexiHAL you can set up a virtual serial port and use socat to bridge between userspace Modbus components and Remora.  If the RS485 component is included in the board config txt, it will listen on port 27183 for UDP packets and forward them to the RS485 port:
 
 ```
-socat pty, link=/tmp/virtalcom0, raw udp:10.10.10.10:27183 &
+socat pty, link=/tmp/virtualcom0, raw udp:10.10.10.10:27183 &
 ```
 
 All credit to Scotta and Terje IO as this project draws heavily from Remora (especially the RP2040 and STM32-W5500 ports) and also GRBLHAL (especially for the SPI DMA and networking stack)
