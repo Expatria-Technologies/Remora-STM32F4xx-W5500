@@ -137,7 +137,14 @@ void ModbusRS485::update()
 
 	if(modrs485Data->from_counter == 0) //if previous transmissions are finished
 	{
-
+		int_fast16_t c;
+		while(c != -1){
+		c = serial2GetC();
+			if(c!=-1) {
+				modrs485Data->fromuartbuffer[modrs485Data->from_counter] = (char) c;
+				modrs485Data->from_counter++;
+			}
+		}
 	}
 	
 }

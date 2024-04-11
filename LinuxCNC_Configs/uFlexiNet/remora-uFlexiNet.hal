@@ -13,6 +13,48 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 	loadrt toggle names=hold_button_toggle
 	loadrt toggle2nist names=hold_toggle,paused_toggle	
 
+# add the remora and motion functions to threads
+
+	addf remora.read 			servo-thread
+	addf motion-command-handler servo-thread
+	addf motion-controller 		servo-thread
+	addf remora.update-freq 	servo-thread
+	addf remora.write 			servo-thread
+	addf estop_latch 			servo-thread
+	addf run_and 				servo-thread
+	addf step_and 				servo-thread
+	addf hold_toggle 			servo-thread
+	addf hold_button_toggle 	servo-thread	
+
+#toggle2nist states & mux selectors
+	net program-is-paused hold_toggle.is-on <= halui.program.is-paused
+
+# vfdmod - uncomment the below if using vfdmod (default). There are also a couple items to edit in spindle_load.hal
+	loadusr -W vfdmod vfdmod.ini
+	net spindle-speed-cmd vfdmod.spindle.rpm-in <= spindle.0.speed-out
+	net spindle-speed-fb vfdmod.spindle.rpm-out <= spindle.0.speed-in
+	net spindle-at-speed vfdmod.spindle.at-speed <= spindle.0.at-speed
+	net spindle-forward vfdmod.control.run-forward <= spindle.0.forward
+	net spindle-reverse vfdmod.control.run-reverse <= spindle.0.reverse
+
+# hy_vfd - uncomment the below if using hy_vfd. There are also a couple items to edit in spindle_load.hal
+	#loadusr -Wn vfd hy_vfd -n vfd -d /dev/ttyAMA1 -p none -S24000 -r 9600 -s 1
+	#setp vfd.enable 1
+	#net spindle-speed-cmd vfd.speed-command <= spindle.0.speed-out
+	#net spindle-speed-fb vfd.spindle-speed-fb <= spindle.0.speed-in
+	#net spindle-at-speed vfd.spindle-at-speed <= spindle.0.at-speed
+	#net spindle-forward vfd.spindle-forward <= spindle.0.forward
+	#net spindle-reverse vfd.spindle-reverse <= spindle.0.reverse
+	#net spindle-on vfd.spindle-on <= spindle.0.on
+	#net spindle-comm-ok <= vfd.hycomm-ok
+	
+# Analog spindle control - Uncomment if using PWM or analog. You will also need to comment out spindle_load.hal in postgui_call_list.hal.
+	#loadrt scale names=spindle_speed_scale
+	#addf spindle_speed_scale servo-thread
+	#setp spindle_speed_scale.gain 0.004167 # volts per RPM, calculated over full scale. [max output voltage]/[Max spindle speed] * 10 Example: 0-10V, 24000 rpm: (10/24000) * 10 = 0.004167
+	#net spindle-scale-in spindle.0.speed-out => spindle_speed_scale.in
+	#net spindle-speed-scaled spindle_speed_scale.out => flexi.SP.SPINDLE_PWM
+	#net spindle-enable spindle.0.on => flexi.output.SPINDLE_EN
 
 # estop and SPI comms enable and feedback
 
@@ -23,20 +65,6 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 	net estop-fault_in remora.input.07 => estop_latch.fault-in
 	net remora-status 		remora.status 				    => estop_latch.ok-in
 	net estop-status estop_latch.ok-out => iocontrol.0.emc-enable-in	
-
-
-# add the remora and motion functions to threads
-
-	addf remora.read 			servo-thread
-	addf motion-command-handler servo-thread
-	addf motion-controller 		servo-thread
-	addf remora.update-freq 	servo-thread
-	addf remora.write 			servo-thread
-	addf estop_latch servo-thread
-	addf run_and servo-thread
-	addf step_and servo-thread
-	addf hold_toggle servo-thread
-	addf hold_button_toggle servo-thread	
 
 
 # joint 0 setup (X axis)
