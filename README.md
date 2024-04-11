@@ -3,9 +3,11 @@
 Port of Remora to uFlexiNet+FlexiHAL
 
 # Installation instructions
-This firmware uses a basically unchanged version of the Remora-nv ethernet that is located here:
+Start by flashing the Remora UF2 firmware to your FlexiHAL.
 
-https://github.com/Expatria-Technologies/Remora-NVEM
+This firmware uses a basically unchanged version of the Remora-eth-0.3.0 ethernet component that is located here:
+
+https://github.com/Expatria-Technologies/Remora/tree/main/LinuxCNC/Components/Remora-eth
 
 All testing is done with the Flexi-Pi LinuxCNC image from here:
 
@@ -28,7 +30,7 @@ python3 upload_config.py FlexiHAL-config.txt
 ```
 A basic configuration to get started is located here: 
 
-https://github.com/Expatria-Technologies/linuxcnc_configs/tree/main/flexi-hal-uFlexiNet
+https://github.com/Expatria-Technologies/linuxcnc_configs/tree/main/flexi-hal-uFlexiNet-XYZ
 
 All credit to Scotta and Terje IO as this project draws heavily from Remora (especially the RP2040 and STM32-W5500 ports) and also GRBLHAL (especially for the SPI DMA and networking stack)
 
