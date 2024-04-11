@@ -13,7 +13,7 @@ All testing is done with the Flexi-Pi LinuxCNC image from here:
 
 https://github.com/Expatria-Technologies/remora-flexi-hal
 
-From your linuxcnc home folder, start by cloning the Remora-NVEM repo and move to the Remora-nv component folder.
+From your linuxcnc home folder, clone the Remora repo and move to the Remora-eth component folder.
 ```
 git clone https://github.com/Expatria-Technologies/Remora.git
 cd Remora/LinuxCNC/Components/Remora-eth
