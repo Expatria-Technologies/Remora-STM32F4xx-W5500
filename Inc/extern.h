@@ -9,7 +9,7 @@
 
 extern volatile uint16_t*  ptrNVMPGInputs;
 extern volatile mpgData_t* ptrMpgData;
-extern volatile rs485Data_t* ptrRs485Data;
+extern rs485Data_t* ptrRs485Data;
 extern Module* MPG;
 extern Module* Modbus;
 

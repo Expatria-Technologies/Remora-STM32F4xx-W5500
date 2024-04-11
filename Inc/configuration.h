@@ -28,6 +28,29 @@
 // Data buffer configuration
 #define BUFFER_SIZE 		64            	// Size of recieve buffer - same as HAL component, 64
 
+#define usart(t) usartN(t)
+#define usartN(t) USART ## t
+#define usartINT(t) usartint(t)
+#define usartint(t) USART ## t ## _IRQn
+#define usartHANDLER(t) usarthandler(t)
+#define usarthandler(t) USART ## t ## _IRQHandler
+#define usartCLKEN(t) usartclken(t)
+#define usartclken(t) __HAL_RCC_USART ## t ## _CLK_ENABLE
+
+#define UART2            usart(3)
+#define UART2_IRQ        usartINT(3)
+#define UART2_IRQHandler usartHANDLER(3)
+#define UART2_CLK_En     usartCLKEN(3)
+
+#define UART2_CLK HAL_RCC_GetPCLK1Freq()
+
+#define UART2_TX_PIN 10
+#define UART2_RX_PIN 5
+#define UART2_PORT GPIOC
+#define UART2_AF GPIO_AF7_USART3
+
+#define RS485_UDP_PORT 27183
+
 #define PLL_SYS_KHZ (125 * 1000)    // 133MHz
 #define SOCKET_MACRAW 0
 #define PORT_LWIPERF 5001

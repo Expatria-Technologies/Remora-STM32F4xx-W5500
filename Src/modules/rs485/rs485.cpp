@@ -2,18 +2,21 @@
 
 #include <stdio.h>
 
+
 /***********************************************************************
                 MODULE CONFIGURATION AND CREATION FROM JSON
 ************************************************************************/
 
-void createNVMPG()
+void createRS485()
 {
     const char* comment = module["Comment"];
     printf("\n%s\n",comment);
 
-	//probably need to just put the MPG data equal on both pointers.
-    //ptrNVMPGInputs = &txData.NVMPGinputs;
-    Modbus = new ModbusRS485(*ptrRs485Data);
+	int baud_rate = module["Baud Rate"];
+
+	printf("Make RS485 baud rate %d\n", baud_rate);
+
+    Modbus = new ModbusRS485(*ptrRs485Data, baud_rate);
     servoThread->registerModule(Modbus);
 }
 
@@ -21,145 +24,142 @@ void createNVMPG()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-ModbusRS485::ModbusRS485(volatile rs485Data_t &ptrData) :
+static stream_rx_buffer_t rxbuf2 = {0};
+static stream_tx_buffer_t txbuf2 = {0};
+
+static bool serial2PutC (const char c)
+{
+    uint32_t next_head = BUFNEXT(txbuf2.head, txbuf2);   // Set and update head pointer
+
+    while(txbuf2.tail == next_head) {           // While TX buffer full
+        UART2->CR1 |= USART_CR1_TXEIE;          // Enable TX interrupts???
+    }
+
+    txbuf2.data[txbuf2.head] = c;               // Add data to buffer
+    txbuf2.head = next_head;                    // and update head pointer
+
+    UART2->CR1 |= USART_CR1_TXEIE;              // Enable TX interrupts
+
+    return true;
+}
+
+// Writes a number of characters from a buffer to the serial output stream, blocks if buffer full
+//
+static void serial2Write (volatile char *s, uint16_t length)
+{
+    char *ptr = (char *)s;
+
+    while(length--)
+        serial2PutC(*ptr++);
+}
+
+//
+// serialGetC - returns -1 if no data available
+//
+static int16_t serial2GetC (void)
+{
+    uint_fast16_t tail = rxbuf2.tail;       // Get buffer pointer
+
+    if(tail == rxbuf2.head)
+        return -1; // no data available
+
+    char data = rxbuf2.data[tail];          // Get next character
+    rxbuf2.tail = BUFNEXT(tail, rxbuf2);    // and update pointer
+
+    return (int16_t)data;
+}
+
+extern "C" {
+	void UART2_IRQHandler (void)
+	{
+		if(UART2->SR & USART_SR_RXNE) {
+			uint32_t data = UART2->DR;
+
+				uint16_t next_head = BUFNEXT(rxbuf2.head, rxbuf2);  // Get and increment buffer pointer
+				if(next_head == rxbuf2.tail)                        // If buffer full
+					rxbuf2.overflow = 1;                            // flag overflow
+				else {
+					rxbuf2.data[rxbuf2.head] = (char)data;          // if not add data to buffer
+					rxbuf2.head = next_head;                        // and update pointer
+				}
+			
+		}
+
+		if((UART2->SR & USART_SR_TXE) && (UART2->CR1 & USART_CR1_TXEIE)) {
+			uint_fast16_t tail = txbuf2.tail;           // Get buffer pointer
+			UART2->DR = txbuf2.data[tail];              // Send next character
+			txbuf2.tail = tail = BUFNEXT(tail, txbuf2); // and increment pointer
+			if(tail == txbuf2.head)                     // If buffer empty then
+				UART2->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
+	}
+	}
+}
+
+ModbusRS485::ModbusRS485(volatile rs485Data_t &ptrData, int baud_rate) :
 	modrs485Data(&ptrData)
 {
 
-	this->irq = DMA2_Stream2_IRQn;
-	interruptPtr = new ModuleInterrupt(this->irq, this);	// Instantiate a new Module Interrupt object and pass "this" pointer
-
+	modrs485Data = &ptrData;
 
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 	printf("Creating RS485 module\n");
 
-	this->uartHandle.Instance = USART1;
+    UART2_CLK_En();
 
-	if(this->uartHandle.Instance==USART1)
-	{
-		__HAL_RCC_GPIOA_CLK_ENABLE();
+        GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull      = GPIO_NOPULL;
+        GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Pin       = (1 << UART2_RX_PIN)|(1 << UART2_TX_PIN);
+        GPIO_InitStruct.Alternate = UART2_AF;
+    
+    HAL_GPIO_Init(UART2_PORT, &GPIO_InitStruct);
 
-		/**USART1 GPIO Configuration
-		PA9     ------> USART1_TX
-		PA10     ------> USART1_RX
-		*/
-		GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
-		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-		GPIO_InitStruct.Pull = GPIO_NOPULL;
-		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-		GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    UART2->CR1 = USART_CR1_RE|USART_CR1_TE;
+    UART2->BRR = UART_BRR_SAMPLING16(UART2_CLK, baud_rate);
+    UART2->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
 
-		__HAL_RCC_USART1_CLK_ENABLE();
+    HAL_NVIC_SetPriority(UART2_IRQ, 0, 0);
+    HAL_NVIC_EnableIRQ(UART2_IRQ);
 
-		this->uartHandle.Init.BaudRate = 115200;
-		this->uartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-		this->uartHandle.Init.StopBits = UART_STOPBITS_1;
-		this->uartHandle.Init.Parity = UART_PARITY_NONE;
-		this->uartHandle.Init.Mode = UART_MODE_TX_RX;
-		this->uartHandle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-		this->uartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
+	printf("RS485 Interface configured\n");	
 
-		HAL_UART_Init(&this->uartHandle);
-
-		__HAL_RCC_DMA2_CLK_ENABLE();
-
-		this->hdma_usart1_rx.Instance = DMA2_Stream2;
-		this->hdma_usart1_rx.Init.Channel = DMA_CHANNEL_4;
-		this->hdma_usart1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
-		this->hdma_usart1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
-		this->hdma_usart1_rx.Init.MemInc = DMA_MINC_ENABLE;
-		this->hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-		this->hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-		this->hdma_usart1_rx.Init.Mode = DMA_NORMAL;
-		this->hdma_usart1_rx.Init.Priority = DMA_PRIORITY_LOW;
-		this->hdma_usart1_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-
-		HAL_DMA_Init(&this->hdma_usart1_rx);
-
-	    __HAL_LINKDMA(&this->uartHandle,hdmarx,this->hdma_usart1_rx);
-
-	    HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-	    HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-
-	    this->hdma_usart1_tx.Instance = DMA2_Stream7;
-	    this->hdma_usart1_tx.Init.Channel = DMA_CHANNEL_4;
-	    this->hdma_usart1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
-	    this->hdma_usart1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
-	    this->hdma_usart1_tx.Init.MemInc = DMA_MINC_ENABLE;
-	    this->hdma_usart1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-	    this->hdma_usart1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-	    //this->hdma_usart1_tx.Init.Mode = DMA_NORMAL;
-	    this->hdma_usart1_tx.Init.Mode = DMA_CIRCULAR;
-	    this->hdma_usart1_tx.Init.Priority = DMA_PRIORITY_LOW;
-	    this->hdma_usart1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-
-	    HAL_DMA_Init(&this->hdma_usart1_tx);
-
-	    __HAL_LINKDMA(&this->uartHandle,hdmatx,this->hdma_usart1_tx);
-
-		printf("UART1 DMA configured\n");
-	}
-
-	sprintf((char*)this->txData, "ZZ");
-	HAL_UART_Transmit(&this->uartHandle, (uint8_t*)&this->txData, 53, 100);
-
-	HAL_UART_Receive_DMA(&this->uartHandle, (uint8_t*)&this->rxData, 1);
 }
 
 
-void NVMPG::update()
+void ModbusRS485::update()
 {
-	if (this->serialReceived)
-	{
-		// get the button number from the low nibble, subtract 2 (buttons start from #2), NVMPG start at bit 26 in the uint64_t output structure
-		mask = 1 << ((rxData & 0x0f) - 2);
-
-		// button state is from the high nibble, x0_ is button down (logical 1), x8_ is button up (logical 0)
-		buttonState = (rxData & 0x80);
-
-		if (buttonState)
-		{
-			*(this->ptrData) &= ~this->mask;
-		}
-		else
-		{
-			*(this->ptrData) |= this->mask;
-		}
-
-		rxData = 0;
-		this->serialReceived = false;
+	//if there are bytes in the buffer mark them for transmission
+	if(modrs485Data->to_counter){
+		serial2Write(modrs485Data->touartbuffer, modrs485Data->to_counter);
+		modrs485Data->to_counter = 0;
 	}
 
-	if (this->payloadReceived)
+	if(modrs485Data->from_counter == 0) //if previous transmissions are finished
 	{
-		// copy the data to txData buffer
-		for (int i = 1; i < 53; i++)
-		{
-			this->txData[i] =  this->ptrMpgData->payload[i+4];
-		}
-		HAL_UART_Transmit_DMA(&this->uartHandle, (uint8_t*)&this->txData, 53);
-		this->payloadReceived = false;
+
 	}
+	
 }
 
 
-void NVMPG::slowUpdate()
+void ModbusRS485::slowUpdate()
 {
 	return;
 }
 
-void NVMPG::configure()
+void ModbusRS485::configure()
 {
 	// use standard module configure method to set payload flag
 	this->payloadReceived = true;
 }
 
-void NVMPG::handleInterrupt()
+void ModbusRS485::handleInterrupt()
 {
-	this->serialReceived = true;
-	HAL_DMA_IRQHandler(&this->hdma_usart1_rx);
-	HAL_UART_Receive_DMA(&this->uartHandle, (uint8_t*)&this->rxData, 1);
+	//this->serialReceived = true;
+	//HAL_DMA_IRQHandler(&this->hdma_usart1_rx);
+	//HAL_UART_Receive_DMA(&this->uartHandle, (uint8_t*)&this->recvChar, 1);
+	//HAL_UARTEx_ReceiveToIdle_DMA(&this->uartHandle, (uint8_t*)&this->modrs485Data->fromuartbuffer,64);
 }
 
 

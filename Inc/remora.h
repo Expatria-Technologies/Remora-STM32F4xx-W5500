@@ -85,6 +85,20 @@ typedef union
 	};
 } mpgData_t;
 
+#ifdef SOCAT_RS485
+typedef union
+{
+	struct
+	{
+		char touartbuffer[BUFFER_SIZE];
+		char fromuartbuffer[BUFFER_SIZE];
+		uint8_t to_counter;
+		uint8_t from_counter;	
+	};
+
+} rs485Data_t;
+#endif
+
 typedef struct {
     rxData_t rxBuffers[2]; // Two buffers for rxData_t
     int currentRxBuffer;   // Index of the current rxData_t buffer

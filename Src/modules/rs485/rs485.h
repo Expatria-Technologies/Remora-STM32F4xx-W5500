@@ -13,42 +13,51 @@
 
 #include "extern.h"
 
-void createNVMPG(void);
+#define RX_BUFFER_SIZE BUFFER_SIZE
+#define TX_BUFFER_SIZE BUFFER_SIZE
 
-class NVMPG : public Module
+typedef struct {
+    volatile uint_fast16_t head;
+    volatile uint_fast16_t tail;
+    volatile bool rts_state;
+    bool overflow;
+    bool backup;
+    char data[RX_BUFFER_SIZE];
+} stream_rx_buffer_t;
+
+typedef struct {
+    volatile uint_fast16_t head;
+    volatile uint_fast16_t tail;
+    char data[TX_BUFFER_SIZE];
+} stream_tx_buffer_t;
+
+#define BUFNEXT(ptr, buffer) ((ptr + 1) & (sizeof(buffer.data) - 1))
+#define BUFCOUNT(head, tail, size) ((head >= tail) ? (head - tail) : (size - tail + head))
+
+void createRS485(void);
+
+class ModbusRS485 : public Module
 {
 	friend class ModuleInterrupt;
 
 	private:
+	
+		volatile rs485Data_t *modrs485Data;
 
-		ModuleInterrupt*	interruptPtr;
-		IRQn_Type			irq;
-
-		volatile mpgData_t	*ptrMpgData;
-		volatile uint16_t 	*ptrData;
-
-		uint8_t txData[53] = {'\0'};
-		uint8_t rxData;
-		uint8_t i = 0;
-
-		uint16_t mask;
-		bool buttonState;
-
-		bool serialReceived = false;
+		//bool serialReceived = false;
 		bool payloadReceived = false;
-
-		UART_HandleTypeDef uartHandle;
-		DMA_HandleTypeDef hdma_usart1_rx;
-		DMA_HandleTypeDef hdma_usart1_tx;
+		char recvChar;
+		//int baud_rate;
 
 	public:
 
-		NVMPG(volatile mpgData_t&, volatile uint16_t&);
+		ModbusRS485(volatile rs485Data_t&, int baud_rate);
 		virtual void update(void);
 		virtual void slowUpdate(void);
 		virtual void configure(void);
-
 		void handleInterrupt(void);
+
+		void serialWrite(const char *s, uint16_t length);
 };
 
 #endif

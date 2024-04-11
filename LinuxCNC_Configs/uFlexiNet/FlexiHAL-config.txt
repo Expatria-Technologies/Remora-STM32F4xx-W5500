@@ -208,6 +208,12 @@
 	"Type": "Spindle PWM",
 		"Comment":			"SPINDLE_PWM",
 		"SP[i]":			0
-	}	
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Socat RS485",
+		"Comment":			"SOCAT_RS485",
+		"Baud Rate":		19200
+	}		
 	]
 }

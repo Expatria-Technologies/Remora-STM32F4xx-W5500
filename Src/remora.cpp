@@ -72,6 +72,7 @@ extern "C"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
 #include "modules/pwm/spindlePwm.h"
+#include "modules/rs485/rs485.h"
 
 
 /***********************************************************************
@@ -106,6 +107,15 @@ pruThread* servoThread;
 pruThread* baseThread;
 RemoraComms* comms;
 Module* MPG;
+
+#ifdef SOCAT_RS485
+Module* Modbus;
+struct udp_pcb *upcb_rs485;
+rs485Data_t rs485Data;
+rs485Data_t* ptrRs485Data = &rs485Data;
+void udp_rs485_data_send(void);
+#endif
+
 RxPingPongBuffer rxPingPongBuffer;
 TxPingPongBuffer txPingPongBuffer;
 
@@ -115,6 +125,7 @@ mpgData_t mpgData;
 
 volatile uint16_t* ptrNVMPGInputs;
 volatile mpgData_t* ptrMpgData = &mpgData;
+
 
 // Json config file stuff
 const char defaultConfig[] = DEFAULT_CONFIG;
@@ -380,7 +391,6 @@ void configThreads()
     }
 }
 
-
 void loadModules()
 {
     printf("\n4. Loading modules\n");
@@ -424,6 +434,10 @@ void loadModules()
 			{
 				createSpindlePWM();
 			}
+        	else if (!strcmp(type,"Socat RS485"))
+			{
+				createRS485();
+			}            
         }
     }
 
@@ -745,6 +759,8 @@ void EthernetTasks()
         }
         sys_check_timeouts();        
     }
+
+    udp_rs485_data_send();
 }
 
 void udpServerInit(void)
@@ -769,10 +785,8 @@ void udpServerInit(void)
 #ifdef SOCAT_RS485
    // UDP control for RS485 data
 
-   struct udp_pcb *upcb_rs485;
-
    upcb_rs485 = udp_new();
-   err = udp_bind(upcb_rs485, &g_ip, 27183);  // 27183 is the rs485 UDP port
+   err = udp_bind(upcb_rs485, &g_ip, RS485_UDP_PORT);  // 27183 is the rs485 UDP port
 
    /* 3. Set a receive callback for the upcb */
    if(err == ERR_OK)
@@ -864,19 +878,46 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 #ifdef SOCAT_RS485
 void udp_rs485_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
-	int txlen = 0;
-	struct pbuf *txBuf;
 
     //received data from host needs to be sent out the uart, for now print to screen.
-    printf("RS485 bytes %d: %s\r\n", p->len, p->payload);
+    //printf("RS485 bytes %d: %s\r\n", p->len, p->payload);
+
+    if(ptrRs485Data->to_counter == 0){
+        memcpy((void *)&ptrRs485Data->touartbuffer, p->payload, p->len);
+        ptrRs485Data->to_counter = p->len;
+    }
 
 	// Free the p buffer
 	pbuf_free(p);
 }
 
-void udp_rs485_data_send(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+void udp_rs485_data_send()
 {
+	int txlen = 0;
+	struct pbuf *txBuf;
+    
+    //check to see if there are any UART bytes to send
+    if(ptrRs485Data->from_counter){
+        txlen = ptrRs485Data->from_counter;
+        // allocate pbuf from RAM
+        txBuf = pbuf_alloc(PBUF_TRANSPORT, txlen, PBUF_RAM);
 
+        // copy the data into the buffer
+        pbuf_take(txBuf, (char*)&ptrRs485Data->fromuartbuffer, txlen);
+
+        //RS485_UDP_PORT
+        // Connect to the remote client
+        udp_connect(upcb_rs485, &g_ip, RS485_UDP_PORT);
+
+        // Send a Reply to the Client
+        udp_send(upcb_rs485, txBuf);
+
+        // free the UDP connection, so we can accept new clients
+        udp_disconnect(upcb_rs485);
+
+        // Free the p_tx buffer
+        pbuf_free(txBuf);
+    }
 }
 #endif
 
