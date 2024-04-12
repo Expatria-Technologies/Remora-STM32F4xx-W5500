@@ -68,6 +68,7 @@ void Stepgen::update()
 
 void Stepgen::updatePost()
 {
+	//to-do need to ensure that minimum pulse timing is met.
 	this->stopPulses();
 }
 
@@ -84,7 +85,6 @@ void Stepgen::makePulses()
 	txData_t* txData = getCurrentTxBuffer(&txPingPongBuffer);
 
 	this->isEnabled = ((rxData->jointEnable & this->mask) != 0);
-
 	
 	if (this->isEnabled == true)       											// this Step generator is enables so make the pulses
 	{
@@ -131,7 +131,7 @@ void Stepgen::makePulses()
 
 void Stepgen::stopPulses()
 {
-	//this->stepPin->set(false);	// Reset step pin
+	this->stepPin->set(false);	// Reset step pin
 	this->isStepping = false;
 }
 

@@ -89,6 +89,13 @@ void pruThread::run(void)
 	// iterate over the Thread pointer vector to run all instances of Module::runModule()
 	for (iter = vThread.begin(); iter != vThread.end(); ++iter) (*iter)->runModule();
 
+	//need a check here on the base thread to ensure the pulse width is correct.
+	if(this->frequency > 10000 ){
+		for (int j = 67; j > 0; j--) {
+			__ASM volatile ("nop");
+		}
+	}
+
 	// iterate over the second vector that contains module pointers to run after (post) the main vector
 	if (hasThreadPost)
 	{
