@@ -18,7 +18,7 @@ class Stepgen : public Module
   private:
 
     int jointNumber;              	// LinuxCNC joint number
-    int mask;
+    uint8_t mask;
 
     std::string step, direction;	 // physical pins connections
 

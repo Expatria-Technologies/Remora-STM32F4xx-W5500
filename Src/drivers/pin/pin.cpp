@@ -73,7 +73,7 @@ void Pin::configPin()
         this->pinNumber     = this->portAndPin[2] - '0';       
         uint16_t pin2       = this->portAndPin[3] - '0';       
 
-        if (pin2 <= 8) 
+        if (pin2 <= 9) 
         {
             this->pinNumber = this->pinNumber * 10 + pin2;
         }
@@ -122,6 +122,7 @@ void Pin::configPin()
 void Pin::initPin()
 {
     // Configure GPIO pin Output Level
+
     HAL_GPIO_WritePin(this->GPIOx, this->pin, GPIO_PIN_RESET);
 
     // Configure the GPIO pin
