@@ -91,7 +91,7 @@ void pruThread::run(void)
 
 	//need a check here on the base thread to ensure the pulse width is correct.
 	if(this->frequency > 10000 ){
-		for (int j = 67; j > 0; j--) {
+		for (int j = STEP_PULSE_FACTOR; j > 0; j--) {
 			__ASM volatile ("nop");
 		}
 	}
