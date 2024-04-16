@@ -51,10 +51,12 @@ Stepgen::Stepgen(int32_t threadFreq, int jointNumber, std::string step, std::str
 	this->stepPin = new Pin(this->step, OUTPUT);
 	this->directionPin = new Pin(this->direction, OUTPUT);
 	this->DDSaccumulator = 0;
+	this->rawCount = 0;
 	this->frequencyScale = (float)(1 << this->stepBit) / (float)threadFreq;
 	this->mask = 1 << this->jointNumber;
-	this->isEnabled = false;
+	this->isEnabled = true;
 	this->isForward = false;
+	this->lastDir = !this->isForward;
 }
 
 
@@ -66,6 +68,7 @@ void Stepgen::update()
 
 void Stepgen::updatePost()
 {
+	//to-do need to ensure that minimum pulse timing is met.
 	this->stopPulses();
 }
 
@@ -82,18 +85,15 @@ void Stepgen::makePulses()
 	txData_t* txData = getCurrentTxBuffer(&txPingPongBuffer);
 
 	this->isEnabled = ((rxData->jointEnable & this->mask) != 0);
-
 	
 	if (this->isEnabled == true)       											// this Step generator is enables so make the pulses
 	{
 		this->frequencyCommand = rxData->jointFreqCmd[jointNumber];             // Get the latest frequency command via pointer to the data source
-		//this->frequencyCommand = 60000;
 		this->DDSaddValue = this->frequencyCommand * this->frequencyScale;		// Scale the frequency command to get the DDS add value
 		stepNow = this->DDSaccumulator;                           				// Save the current DDS accumulator value
 		this->DDSaccumulator += this->DDSaddValue;           	  				// Update the DDS accumulator with the new add value
 		stepNow ^= this->DDSaccumulator;                          				// Test for changes in the low half of the DDS accumulator
 		stepNow &= (1L << this->stepBit);                         				// Check for the step bit
-		this->rawCount = this->DDSaccumulator >> this->stepBit;   				// Update the position raw count
 
 		if (this->DDSaddValue > 0)												// The sign of the DDS add value indicates the desired direction
 		{
@@ -104,12 +104,23 @@ void Stepgen::makePulses()
 			this->isForward = false;
 		}
 
-		if (stepNow)
+        if (this->lastDir != this->isForward)
+        {
+            //Direction has changed, flip dir pin and do not step this iteration to give some setup time. At a 160kHz base thread freq, this should be about 6.25us, at 120kHz 8.33us (1 period). JMC servos requre 6us. TODO - make hold time configurable.
+            this->lastDir = this->isForward;
+            this->directionPin->set(this->isForward);             		// Set direction pin
+        }else if (stepNow)
 		{
-			this->directionPin->set(this->isForward);             		    // Set direction pin
 			this->stepPin->set(true);										// Raise step pin - A4988 / DRV8825 stepper drivers only need 200ns setup time
-			txData->jointFeedback[jointNumber] = this->DDSaccumulator;       // Update position feedback via pointer to the data receiver
-			//txData->jointFeedback[jointNumber] = 0;
+            if (this->isForward)
+            {
+                this->rawCount++;
+            }
+            else
+            {
+                this->rawCount--;
+            }
+            txData->jointFeedback[jointNumber] = this->rawCount;							// Update position feedback via pointer to the data receiver
 			this->isStepping = true;
 		}
 	}

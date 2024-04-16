@@ -35,6 +35,9 @@ extern "C"
 #include "socket.h"
 #include "w5x00_spi.h"
 #include "w5x00_lwip.h"
+#ifdef USB_DEBUG
+#include "usb_serial.h"
+#endif
 }
 
 // Ethenet (LWIP)
@@ -68,6 +71,8 @@ extern "C"
 #include "modules/debug/debug.h"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
+#include "modules/pwm/spindlePwm.h"
+#include "modules/rs485/rs485.h"
 
 
 /***********************************************************************
@@ -101,8 +106,26 @@ uint8_t noDataCount;
 pruThread* servoThread;
 pruThread* baseThread;
 RemoraComms* comms;
+Module* MPG;
+
+#ifdef SOCAT_RS485
+Module* Modbus;
+struct udp_pcb *upcb_rs485;
+rs485Data_t rs485Data;
+rs485Data_t* ptrRs485Data = &rs485Data;
+void udp_rs485_data_send(void);
+#endif
+
 RxPingPongBuffer rxPingPongBuffer;
 TxPingPongBuffer txPingPongBuffer;
+
+volatile bool cmdReceived;
+volatile bool mpgReceived;
+mpgData_t mpgData;
+
+volatile uint16_t* ptrNVMPGInputs;
+volatile mpgData_t* ptrMpgData = &mpgData;
+
 
 // Json config file stuff
 #if BOARD_FLEXI_HAL
@@ -146,6 +169,7 @@ void EthernetInit();
 void udpServerInit();
 void EthernetTasks();
 void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
+void udp_rs485_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
 
 /* Network */
@@ -263,6 +287,17 @@ void moveJson()
 
 }
 
+void clearJsonUploadArea()
+{
+        HAL_FLASH_Unlock();
+
+	// erase the old JSON config file
+    printf("Erase upload area\n");
+	FLASH_If_Erase(JSON_UPLOAD_ADDRESS);
+
+         HAL_FLASH_Lock();
+}
+
 
 void jsonFromFlash(std::string json)
 {
@@ -373,7 +408,6 @@ void configThreads()
     }
 }
 
-
 void loadModules()
 {
     printf("\n4. Loading modules\n");
@@ -415,8 +449,12 @@ void loadModules()
 			}
         	else if (!strcmp(type,"Spindle PWM"))
 			{
-				//createSpindlePWM();
+				createSpindlePWM();
 			}
+        	else if (!strcmp(type,"Socat RS485"))
+			{
+				createRS485();
+			}            
         }
     }
 
@@ -611,6 +649,9 @@ static txData_t* getAltTxBuffer(TxPingPongBuffer* buffer) {
 int main()
 {
     main_init();
+    #if USB_DEBUG
+      usbInit();
+    #endif
 
     HAL_Delay(1000 * 3); // wait for 3 seconds
 
@@ -627,6 +668,8 @@ int main()
     IP4_ADDR(&g_ip, 10, 10, 10, 10);
     IP4_ADDR(&g_mask, 255, 255, 255, 0);
     IP4_ADDR(&g_gateway, 10, 10, 10, 1);    
+
+    //clearJsonUploadArea();
 
     EthernetInit();
     udpServerInit();
@@ -650,13 +693,14 @@ int main()
             {
             printf("Moving new config file to Flash storage\n");
             moveJson();
+            clearJsonUploadArea();
 
             // force a reset to load new JSON configuration
             printf("Forceing a reboot now....\n");
-            NVIC_SystemReset();
-            for (;;) {
-                __NOP();
-            }
+            HAL_NVIC_SystemReset();
+            //for (;;) {
+            //    __NOP();
+            //}
             }
         }
     }
@@ -732,6 +776,8 @@ void EthernetTasks()
         }
         sys_check_timeouts();        
     }
+
+    udp_rs485_data_send();
 }
 
 void udpServerInit(void)
@@ -752,15 +798,30 @@ void udpServerInit(void)
    {
 	   udp_remove(upcb);
    }
-}
 
+#ifdef SOCAT_RS485
+   // UDP control for RS485 data
+
+   upcb_rs485 = udp_new();
+   err = udp_bind(upcb_rs485, &g_ip, RS485_UDP_PORT);  // 27183 is the rs485 UDP port
+
+   /* 3. Set a receive callback for the upcb */
+   if(err == ERR_OK)
+   {
+	   udp_recv(upcb_rs485, udp_rs485_data_callback, NULL);
+   }
+   else
+   {
+	   udp_remove(upcb_rs485);
+   }
+#endif
+
+}
 
 void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
 	int txlen = 0;
-    int n;
 	struct pbuf *txBuf;
-    uint32_t status;
 
     //received data from host needs to go into the inactive buffer
     rxData_t* rxBuffer = getAltRxBuffer(&rxPingPongBuffer);
@@ -777,9 +838,7 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         {        
             //if it is a read, need to swap the TX buffer over but the RX buffer needs to remain unchanged.
             //feedback data will now go into the alternate buffer
-
             //don't need to wait for the servo thread.
-
             //disable interrupts and swap the buffers.
             __disable_irq();
             swapTxBuffers(&txPingPongBuffer);
@@ -794,12 +853,8 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
         else if (rxBuffer->header == PRU_WRITE)
         {
             //if it is a write, then both the RX and TX buffers need to be changed.
-
             //don't need to wait for the servo thread.
-
             //disable interrupts and swap the buffers.
-
-
             //feedback data will now go into the alternate buffer
             __disable_irq();
             swapTxBuffers(&txPingPongBuffer);
@@ -836,3 +891,59 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	// Free the p buffer
 	pbuf_free(p);
 }
+
+#ifdef SOCAT_RS485
+void udp_rs485_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+{
+
+    //received data from host needs to be sent out the uart, for now print to screen.
+    //printf("RS485 bytes %d: %s\r\n", p->len, p->payload);
+
+    if(ptrRs485Data->to_counter == 0){
+        memcpy((void *)&ptrRs485Data->touartbuffer, p->payload, p->len);
+        ptrRs485Data->to_counter = p->len;
+    }
+
+	// Free the p buffer
+	pbuf_free(p);
+}
+
+void udp_rs485_data_send()
+{
+	int txlen = 0;
+	struct pbuf *txBuf;
+    
+    //check to see if there are any UART bytes to send
+    if(ptrRs485Data->from_counter){
+        txlen = ptrRs485Data->from_counter;
+        // allocate pbuf from RAM
+        txBuf = pbuf_alloc(PBUF_TRANSPORT, txlen, PBUF_RAM);
+
+        // copy the data into the buffer
+        pbuf_take(txBuf, (char*)&ptrRs485Data->fromuartbuffer, txlen);
+
+        //RS485_UDP_PORT
+        // Connect to the remote client
+        udp_connect(upcb_rs485, &g_ip, RS485_UDP_PORT);
+
+        // Send a Reply to the Client
+        udp_send(upcb_rs485, txBuf);
+
+        // free the UDP connection, so we can accept new clients
+        udp_disconnect(upcb_rs485);
+
+        // Free the p_tx buffer
+        pbuf_free(txBuf);
+    }
+}
+#endif
+
+#ifdef USB_DEBUG
+extern "C" {
+  __attribute__((weak))
+  int _write(int file, char *ptr, int len)
+  {
+        while(CDC_Transmit_FS((uint8_t*)ptr, len) == USBD_BUSY);
+    }
+}
+#endif

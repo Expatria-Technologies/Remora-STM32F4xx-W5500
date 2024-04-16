@@ -13,7 +13,7 @@
 #define JSON_BUFF_SIZE	    10000			// Jason dynamic buffer size
 
 #define JOINTS			    6				// Number of joints - set this the same as LinuxCNC HAL compenent. Max 8 joints
-#define VARIABLES           2             	// Number of command values - set this the same as the LinuxCNC HAL compenent
+#define VARIABLES           4             	// Number of command values - set this the same as the LinuxCNC HAL compenent
 
 #define PRU_DATA		    0x64617461 	    // "data" SPI payload
 #define PRU_READ            0x72656164      // "read" SPI payload
@@ -47,7 +47,30 @@
 #define B_DIRECTION_PIN        15
 
 // Data buffer configuration
-#define BUFFER_SIZE 		68            	// Size of recieve buffer - same as HAL component, 64
+#define BUFFER_SIZE 		64            	// Size of recieve buffer - same as HAL component, 64
+
+#define usart(t) usartN(t)
+#define usartN(t) USART ## t
+#define usartINT(t) usartint(t)
+#define usartint(t) USART ## t ## _IRQn
+#define usartHANDLER(t) usarthandler(t)
+#define usarthandler(t) USART ## t ## _IRQHandler
+#define usartCLKEN(t) usartclken(t)
+#define usartclken(t) __HAL_RCC_USART ## t ## _CLK_ENABLE
+
+#define UART2            usart(3)
+#define UART2_IRQ        usartINT(3)
+#define UART2_IRQHandler usartHANDLER(3)
+#define UART2_CLK_En     usartCLKEN(3)
+
+#define UART2_CLK HAL_RCC_GetPCLK1Freq()
+
+#define UART2_TX_PIN 10
+#define UART2_RX_PIN 5
+#define UART2_PORT GPIOC
+#define UART2_AF GPIO_AF7_USART3
+
+#define RS485_UDP_PORT 27183
 
 #define PLL_SYS_KHZ (125 * 1000)    // 133MHz
 #define SOCKET_MACRAW 0

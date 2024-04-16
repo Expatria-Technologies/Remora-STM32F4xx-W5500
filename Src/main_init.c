@@ -29,7 +29,6 @@ static void SystemClock_Config (void);
 static void MX_GPIO_Init (void);
 static void MX_DMA_Init (void);
 
-
 int main_init(void)
 {
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -63,10 +62,6 @@ int main_init(void)
     __HAL_RCC_TIM4_CLK_ENABLE();
     __HAL_RCC_TIM5_CLK_ENABLE();
     __HAL_RCC_TIM9_CLK_ENABLE();
-
-    #if USB_DEBUG
-      usbInit();
-    #endif
 
     //return to Remora
     return 0;
@@ -468,4 +463,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-

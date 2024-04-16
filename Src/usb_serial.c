@@ -1,30 +1,19 @@
-/*
+#if USB_SERIAL_CDC
 
-  usb_serial.c - USB serial port implementation for STM32F103C8 ARM processors
 
-  Part of grblHAL
-
-  Copyright (c) 2019-2021 Terje Io
-
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
-
-*/
-
-#include "main_init.h"
-#include "usbd_cdc_if.h"
-#include "usb_device.h"
 #include "usb_serial.h"
+
+#ifndef RX_BUFFER_SIZE
+#define RX_BUFFER_SIZE 1024 // must be a power of 2
+#endif
+
+#ifndef TX_BUFFER_SIZE
+#define TX_BUFFER_SIZE 512  // must be a power of 2
+#endif
+
+#ifndef BLOCK_TX_BUFFER_SIZE
+#define BLOCK_TX_BUFFER_SIZE 256
+#endif
 
 #define BUFNEXT(ptr, buffer) ((ptr + 1) & (sizeof(buffer.data) - 1))
 #define BUFCOUNT(head, tail, size) ((head >= tail) ? (head - tail) : (size - tail + head))
@@ -35,60 +24,35 @@ typedef struct {
     volatile bool rts_state;
     bool overflow;
     bool backup;
-    char data[16];
+    char data[RX_BUFFER_SIZE];
 } stream_rx_buffer_t;
 
+// double buffered tx stream
+typedef struct {
+    uint_fast16_t length;
+    uint_fast16_t max_length;
+    char *s;
+    bool use_tx2data;
+    char data[BLOCK_TX_BUFFER_SIZE];
+    char data2[BLOCK_TX_BUFFER_SIZE];
+} stream_block_tx_buffer2_t;
+
 static stream_rx_buffer_t rxbuf = {0};
-
-volatile usb_linestate_t usb_linestate = {0};
-
-static bool is_connected (void)
-{
-    return usb_linestate.pin.dtr && uwTick - usb_linestate.timestamp >= 15;
-}
-
-//
-// Writes a single character to the USB output stream, blocks if buffer full
-//
-static bool usbPutC (const char c)
-{
-    static uint8_t buf[1];
-    uint32_t ms = uwTick;  //50 ms timeout
-    uint32_t timeout_ms = ms + 50;    
-
-    *buf = c;
-
-    while(CDC_Transmit_FS(buf, 1) == USBD_BUSY) {
-        if (ms > timeout_ms){
-            return false;
-        }        
-        ms = uwTick;            
-    }
-
-    return true;
-}
-
-#if USB_DEBUG
-
-int _write(int file, char *ptr, int len) { 
-    while(CDC_Transmit_FS((uint8_t*) ptr, len) == USBD_BUSY);     
-    return len; 
-}
-
-#endif
+static stream_block_tx_buffer2_t txbuf = {0};
 
 // NOTE: add a call to this function as the first line CDC_Receive_FS() in usbd_cdc_if.c
 void usbBufferInput (uint8_t *data, uint32_t length)
 {
     while(length--) {
+                 // Check and strip realtime commands,
+            uint16_t next_head = BUFNEXT(rxbuf.head, rxbuf);    // Get and increment buffer pointer
+            if(next_head == rxbuf.tail)                         // If buffer full
+                rxbuf.overflow = 1;                             // flag overflow
+            else {
+                rxbuf.data[rxbuf.head] = *data;                 // if not add data to buffer
+                rxbuf.head = next_head;                         // and update pointer
+            }
 
-        uint16_t next_head = BUFNEXT(rxbuf.head, rxbuf);    // Get and increment buffer pointer
-        if(next_head == rxbuf.tail)                         // If buffer full
-            rxbuf.overflow = 1;                             // flag overflow
-        else {
-            rxbuf.data[rxbuf.head] = *data;                 // if not add data to buffer
-            rxbuf.head = next_head;                         // and update pointer
-        }
         data++;                                                 // next...
     }
 }
@@ -99,5 +63,8 @@ void usbInit (void)
 {
 
     MX_USB_DEVICE_Init();
-
+    
+    return;
 }
+
+#endif

@@ -2,6 +2,13 @@
 	"Board": "FlexiHAL",
 	"Modules":[
 	{
+	"Thread": "Servo",
+	"Type": "Blink",
+		"Comment":			"Blinky",
+		"Pin":				"PC04",
+		"Frequency": 		2
+	},
+	{
 	"Thread": "Base",
 	"Type": "Stepgen",
 		"Comment":			"X - Joint 0 step generator",
@@ -26,22 +33,6 @@
 		"Direction Pin": 	"PC15"
 	},
 	{
-	"Thread": "Base",
-	"Type": "Stepgen",
-		"Comment":			"A - Joint 3 step generator",
-		"Joint Number":		3,
-		"Step Pin": 		"PD02",
-		"Direction Pin": 	"PC12"
-	},
-	{
-	"Thread": "Base",
-	"Type": "Stepgen",
-		"Comment":			"B - Joint 4 step generator",
-		"Joint Number":		4,
-		"Step Pin": 		"PB14",
-		"Direction Pin": 	"PB15"
-	},
-	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"X_Limit",
@@ -49,7 +40,7 @@
 		"Mode":				"Input",
 		"Data Bit":			0,
 		"Invert":			"False"
-	}	,
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -67,7 +58,7 @@
 		"Mode":				"Input",
 		"Data Bit":			2,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -76,7 +67,7 @@
 		"Mode":				"Input",
 		"Data Bit":			3,
 		"Invert":			"False"
-	}
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
@@ -85,131 +76,144 @@
 		"Mode":				"Input",
 		"Data Bit":			4,
 		"Invert":			"False"
-	}
+	},	
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"FEED_HOLD",
+		"Pin":				"PC08",
+		"Mode":				"Input",
+		"Data Bit":			5,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"CYCLE_START",
+		"Pin":				"PC11",
+		"Mode":				"Input",
+		"Data Bit":			6,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"HALT",
 		"Pin":				"PB12",
 		"Mode":				"Input",
-		"Data Bit":			5,
-		"Invert":			"False"
-	}
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"HOLD",
-		"Pin":				"PC08",
-		"Mode":				"Input",
-		"Data Bit":			6,
-		"Invert":			"False"
-	}
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"RUN",
-		"Pin":				"PC11",
-		"Mode":				"Input",
 		"Data Bit":			7,
-		"Invert":			"False"
-	}
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"DOOR",
-		"Pin":				"PC04",
-		"Mode":				"Input",
-		"Data Bit":			8,
-		"Invert":			"False"
-	}	
+		"Invert":			"True"
+	},	
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"PROBE",
 		"Pin":				"PB07",
 		"Mode":				"Input",
-		"Data Bit":			9,
+		"Data Bit":			8,
 		"Invert":			"False"
-	}	
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
-		"Comment":			"Z_EN",
-		"Pin":				"PA13",
-		"Mode":				"Output",
-		"Data Bit":			0
-	}
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"XYAB_EN",
+		"Comment":			"STEP_EN",
 		"Pin":				"PA14",
 		"Mode":				"Output",
-		"Data Bit":			1
-	}	
+		"Data Bit":			0,
+		"Invert":			"False"
+	},	
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
-		"Comment":			"SPIN_EN",
-		"Pin":				"PB02",
+		"Comment":			"STEP_EN_Z",
+		"Pin":				"PA13",
 		"Mode":				"Output",
-		"Data Bit":			2
-	}
+		"Data Bit":			1,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
-		"Comment":			"SPIN_DIR",
-		"Pin":				"PB01",
-		"Mode":				"Output",
-		"Data Bit":			3
-	}
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"FLOOD",
+		"Comment":			"COOLANT",
 		"Pin":				"PC09",
 		"Mode":				"Output",
-		"Data Bit":			4
-	}
+		"Data Bit":			2,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"MIST",
 		"Pin":				"PA07",
 		"Mode":				"Output",
-		"Data Bit":			5
-	}
+		"Data Bit":			3,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"SPINDLE_EN",
+		"Pin":				"PB02",
+		"Mode":				"Output",
+		"Data Bit":			4,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"SPINDLE_DIR",
+		"Pin":				"PB01",
+		"Mode":				"Output",
+		"Data Bit":			5,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"AUXOUT0",
 		"Pin":				"PB13",
 		"Mode":				"Output",
-		"Data Bit":			6
-	}
+		"Data Bit":			6,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"AUXOUT1",
 		"Pin":				"PB00",
 		"Mode":				"Output",
-		"Data Bit":			7
-	}
+		"Data Bit":			7,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"AUXOUT2",
 		"Pin":				"PA04",
 		"Mode":				"Output",
-		"Data Bit":			8
-	}	
+		"Data Bit":			8,
+		"Invert":			"False"
+	},
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"AUXOUT3",
 		"Pin":				"PA06",
 		"Mode":				"Output",
-		"Data Bit":			9
+		"Data Bit":			9,
+		"Invert":			"False"
+	},	
+	{
+	"Thread": "Servo",
+	"Type": "Spindle PWM",
+		"Comment":			"SPINDLE_PWM",
+		"SP[i]":			0
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Socat RS485",
+		"Comment":			"SOCAT_RS485",
+		"Baud Rate":		19200
 	}		
 	]
 }

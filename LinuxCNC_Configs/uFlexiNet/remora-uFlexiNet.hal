@@ -6,15 +6,12 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 
 # load the Remora real-time component
 
-	loadrt remora-nv
-
-
-# estop and SPI comms enable and feedback
-
-	net user-enable-out		<= iocontrol.0.user-enable-out		=> remora.enable
-	net user-request-enable <= iocontrol.0.user-request-enable	=> remora.reset
-	net remora-status 		<= remora.status 				=> iocontrol.0.emc-enable-in
-
+	loadrt remora-eth PRU_base_freq=75000
+	
+	loadrt estop_latch names=estop_latch
+	loadrt and2 names=run_and,step_and
+	loadrt toggle names=hold_button_toggle
+	loadrt toggle2nist names=hold_toggle,paused_toggle	
 
 # add the remora and motion functions to threads
 
@@ -23,39 +20,128 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 	addf motion-controller 		servo-thread
 	addf remora.update-freq 	servo-thread
 	addf remora.write 			servo-thread
+	addf estop_latch 			servo-thread
+	addf run_and 				servo-thread
+	addf step_and 				servo-thread
+	addf hold_toggle 			servo-thread
+	addf hold_button_toggle 	servo-thread	
+
+#toggle2nist states & mux selectors
+	net program-is-paused hold_toggle.is-on <= halui.program.is-paused
+
+# vfdmod - uncomment the below if using vfdmod (default). There are also a couple items to edit in spindle_load.hal
+	loadusr -W vfdmod vfdmod.ini
+	net spindle-speed-cmd vfdmod.spindle.rpm-in <= spindle.0.speed-out
+	net spindle-speed-fb vfdmod.spindle.rpm-out <= spindle.0.speed-in
+	net spindle-at-speed vfdmod.spindle.at-speed <= spindle.0.at-speed
+	net spindle-forward vfdmod.control.run-forward <= spindle.0.forward
+	net spindle-reverse vfdmod.control.run-reverse <= spindle.0.reverse
+
+# hy_vfd - uncomment the below if using hy_vfd. There are also a couple items to edit in spindle_load.hal
+	#loadusr -Wn vfd hy_vfd -n vfd -d /dev/ttyAMA1 -p none -S24000 -r 9600 -s 1
+	#setp vfd.enable 1
+	#net spindle-speed-cmd vfd.speed-command <= spindle.0.speed-out
+	#net spindle-speed-fb vfd.spindle-speed-fb <= spindle.0.speed-in
+	#net spindle-at-speed vfd.spindle-at-speed <= spindle.0.at-speed
+	#net spindle-forward vfd.spindle-forward <= spindle.0.forward
+	#net spindle-reverse vfd.spindle-reverse <= spindle.0.reverse
+	#net spindle-on vfd.spindle-on <= spindle.0.on
+	#net spindle-comm-ok <= vfd.hycomm-ok
+	
+# Analog spindle control - Uncomment if using PWM or analog. You will also need to comment out spindle_load.hal in postgui_call_list.hal.
+	#loadrt scale names=spindle_speed_scale
+	#addf spindle_speed_scale servo-thread
+	#setp spindle_speed_scale.gain 0.004167 # volts per RPM, calculated over full scale. [max output voltage]/[Max spindle speed] * 10 Example: 0-10V, 24000 rpm: (10/24000) * 10 = 0.004167
+	#net spindle-scale-in spindle.0.speed-out => spindle_speed_scale.in
+	#net spindle-speed-scaled spindle_speed_scale.out => remora.SP.0
+	#net spindle-enable spindle.0.on => remora.output.04
+
+# estop and SPI comms enable and feedback
+
+	net user-enable-out		<= iocontrol.0.user-enable-out		=> remora.enable
+	net user-request-enable <= iocontrol.0.user-request-enable => remora.reset estop_latch.reset
+	#Halt is shared with motor alarms and is in the estop loop.	
+	#estop_latch returns 'ok' when fault-in is false, ok-in is true, and reset changes from false to true. 
+	net estop-fault_in remora.input.07 => estop_latch.fault-in
+	net remora-status 		remora.status 				    => estop_latch.ok-in
+	net estop-status estop_latch.ok-out => iocontrol.0.emc-enable-in	
 
 
 # joint 0 setup (X axis)
 
 	setp remora.joint.0.scale 		[JOINT_0]SCALE
 	setp remora.joint.0.maxaccel 	[JOINT_0]STEPGEN_MAXACCEL
-	setp remora.joint.0.pgain		300
-	setp remora.joint.0.ff1gain			.2
+	setp remora.joint.0.pgain 		[JOINT_0]P_GAIN
+	setp remora.joint.0.ff1gain 	[JOINT_0]FF1_GAIN
+	setp remora.joint.0.deadband 	[JOINT_0]DEADBAND
 
 	net j0pos-cmd 		joint.0.motor-pos-cmd 	=> remora.joint.0.pos-cmd
 	net j0pos-fb 		remora.joint.0.pos-fb 	=> joint.0.motor-pos-fb
 	net j0enable 		joint.0.amp-enable-out 	=> remora.joint.0.enable
-
+	
+	net x-home joint.0.home-sw-in => remora.input.00
 
 # joint 1 setup (Y axis)
 
 	setp remora.joint.1.scale 		[JOINT_1]SCALE
 	setp remora.joint.1.maxaccel 	[JOINT_1]STEPGEN_MAXACCEL
-	setp remora.joint.1.pgain		300
-	setp remora.joint.1.ff1gain			.2
+	setp remora.joint.1.pgain 		[JOINT_1]P_GAIN
+	setp remora.joint.1.ff1gain 	[JOINT_1]FF1_GAIN
+	setp remora.joint.1.deadband 	[JOINT_1]DEADBAND
 
 	net j1pos-cmd 		joint.1.motor-pos-cmd 	=> remora.joint.1.pos-cmd
 	net j1pos-fb 		remora.joint.1.pos-fb 	=> joint.1.motor-pos-fb
 	net j1enable 		joint.1.amp-enable-out 	=> remora.joint.1.enable
 
+	net y-home joint.1.home-sw-in => remora.input.01
 
 # joint 2 setup (Z axis)
 
 	setp remora.joint.2.scale 		[JOINT_2]SCALE
 	setp remora.joint.2.maxaccel 	[JOINT_2]STEPGEN_MAXACCEL
-	setp remora.joint.2.pgain		300
-	setp remora.joint.2.ff1gain			.2
+	setp remora.joint.2.pgain 		[JOINT_2]P_GAIN
+	setp remora.joint.2.ff1gain 	[JOINT_2]FF1_GAIN
+	setp remora.joint.2.deadband 	[JOINT_2]DEADBAND
 
 	net j2pos-cmd 		joint.2.motor-pos-cmd 	=> remora.joint.2.pos-cmd
 	net j2pos-fb 		remora.joint.2.pos-fb 	=> joint.2.motor-pos-fb
 	net j2enable 		joint.2.amp-enable-out 	=> remora.joint.2.enable
+	
+	net z-home joint.2.home-sw-in => remora.input.02
+
+# Motor enables
+
+	net j0enable => remora.output.00
+	net j2enable => remora.output.01	
+
+# Flood and mist outputs
+	net flood remora.output.02 <= iocontrol.0.coolant-flood
+	net mist remora.output.03 <= iocontrol.0.coolant-mist
+
+# User buttons
+	#Halt is shared with motor alarms and is up in the estop loop.
+
+	#Hold logic
+	net hold_button remora.input.05 => hold_button_toggle.in
+	net hold_toggle_latch hold_button_toggle.out => hold_toggle.in
+	net hold_on halui.program.pause <= hold_toggle.on
+	net hold_off halui.program.resume <= hold_toggle.off
+
+	#Cycle start logic. When not running, start the program. When in feed hold, single step through the program.
+	net run-step_button remora.input.06 => run_and.in0 step_and.in0
+	net program-is-idle halui.program.is-idle => run_and.in1 #if not running AND button pressed
+	net program-run run_and.out => halui.program.run #run program
+	net program-is-paused => step_and.in1 #if paused AND button pressed
+	net single-step step_and.out => halui.program.step #single step
+
+
+# Probe
+	net probe motion.probe-input <= remora.input.08
+
+# Manual toolchange
+
+	loadusr -W hal_manualtoolchange
+	net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
+	net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
+	net tool-number iocontrol.0.tool-prep-number => hal_manualtoolchange.number
+	net tool-prepare-loopback iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
