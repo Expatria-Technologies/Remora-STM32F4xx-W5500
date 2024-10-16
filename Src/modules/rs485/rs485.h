@@ -1,5 +1,5 @@
-#ifndef NVMPG_H
-#define NVMPG_H
+#ifndef RS485_H
+#define RS485_H
 
 #include "stm32f4xx_hal.h"
 
